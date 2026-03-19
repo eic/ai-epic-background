@@ -2,7 +2,7 @@
 # Convert each *.edm4eic.root -> CSV using ROOT macro inside the container,
 # then zip each CSV into csv-zip/.
 #
-# Assumption (simple): cpp_03_hits_edm4eic.cxx is in the SAME directory where you run snakemake
+# Assumption (simple): trk_hits_to_csv.cxx is in the SAME directory where you run snakemake
 # (or otherwise visible inside the container via bind + working dir).
 
 import os
@@ -17,8 +17,7 @@ ZIP_DIR   = f"{OUT_BASE}/csv-zip"
 LOG_DIR   = f"{OUT_BASE}/logs"
 
 # ROOT macro + argument
-MACRO     = "cpp_03_hits_edm4eic.cxx"
-MACRO_ARG = 2
+MACRO     = f"/work/eic3/users/romanov/ai-background/trk_hits_to_csv.cxx"
 
 # Container image (Snakemake will run rules inside it when you launch with --sdm apptainer)
 container: "/cvmfs/singularity.opensciencegrid.org/eicweb/eic_xl:nightly"
@@ -29,7 +28,7 @@ if not inputs:
     raise ValueError(f"No *.edm4eic.root files found in: {INPUT_DIR}")
 
 # for now process a single file
-inputs = inputs[:1]
+inputs = inputs[:100]
 
 def sample_from_input(p: str) -> str:
     suf = ".edm4eic.root"
@@ -61,17 +60,17 @@ rule hits_csv:
         set -euo pipefail
         mkdir -p "{CSV_DIR}" "{LOG_DIR}"
 
-        echo "=== HITS CSV ====================================================" >  "{log}"
-        echo "Input : {input.root}"                                        >> "{log}"
+        echo "=== HITS CSV ===============================================">"{log}"
+        echo "Input : {input.root}"                                       >> "{log}"
         echo "Output: {output.csv}"                                       >> "{log}"
-        echo "Macro : {MACRO}({MACRO_ARG})"                               >> "{log}"
+        echo "Macro : {MACRO}"                                            >> "{log}"
         echo "Start : $(date)"                                            >> "{log}"
         echo "Host  : $(hostname)"                                        >> "{log}"
-        echo "----------------------------------------------------------------" >> "{log}"
+        echo "-----------------------------------------------------------">> "{log}"
 
-        # Note: macro is referenced by name. Keep cpp_03_hits_edm4eic.cxx in the run directory,
+        # Note: macro is referenced by name. Keep trk_hits_to_csv.cxx in the run directory,
         # or make sure it's visible in-container via bind.
-        root -x -l -b -q "{MACRO}(\"{input.root}\",\"{output.csv}\",{MACRO_ARG})" >> "{log}" 2>&1
+        root -x -l -b -q "{MACRO}(\"{input.root}\",\"{output.csv}\")" >> "{log}" 2>&1
 
         echo "----------------------------------------------------------------" >> "{log}"
         echo "Done  : $(date)"                                            >> "{log}"
