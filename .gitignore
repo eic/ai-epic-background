@@ -1,17 +1,52 @@
-# Python-generated files
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+
+# C/C++ build artifacts
 build/
+*.o
+*.so
+*.a
+
+# Python packaging
+*.egg-info/
+.Python
 dist/
-wheels/
-*.egg-info
+.eggs/
 
-# Virtual environments
+# Virtual envs
 .venv
+venv/
+env/
 
-# Snakemake files
-.snakemake/
+# UV / poetry locks (keep project-level uv.lock if you want pinned deps)
+uv.lock
 
-# Some weird artifacts
-.root_hist
-.python-version
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VitePress / Node
+docs/node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Output data (do not commit campaign products)
+data/
+plots/
+*.root
+*.csv
+*.csv.zip
+
+# Logs
+*.log
+logs/
+
+# Claude / agent worktrees
+.claude/
