@@ -1,5 +1,5 @@
 {
-  "name": "eic-ai-background-docs",
+  "name": "ai-epic-background-docs",
   "version": "0.1.0",
   "private": true,
   "description": "Documentation site for the EIC AI Background analysis project — full-sim background pipeline and CSV-based AI/ML datasets for the Electron Ion Collider.",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/eic/eic-ai-background"
+    "url": "https://github.com/eic/ai-epic-background"
   },
   "keywords": [
     "EIC",
@@ -28,9 +28,9 @@
   "author": "EIC AI Background Group",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/eic/eic-ai-background/issues"
+    "url": "https://github.com/eic/ai-epic-background/issues"
   },
-  "homepage": "https://eic.github.io/eic-ai-background/",
+  "homepage": "https://eic.github.io/ai-epic-background/",
   "devDependencies": {
     "mermaid": "^11.12.2",
     "vitepress": "^1.6.4",

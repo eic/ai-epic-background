@@ -16,7 +16,7 @@ hero:
       link: /full-sim-pipeline
     - theme: alt
       text: View on GitHub
-      link: https://github.com/eic/eic-ai-background
+      link: https://github.com/eic/ai-epic-background
 
 features:
   - icon: 🛰️
@@ -85,7 +85,7 @@ converter.
 ## Project structure
 
 ```
-eic-ai-background/
+ai-epic-background/
 ├── csv_convert/              # ROOT → CSV converter + Snakemake workflow
 │   ├── trk_hits_to_csv.cxx
 │   ├── CMakeLists.txt

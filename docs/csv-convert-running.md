@@ -54,7 +54,7 @@ Positional arguments are interpreted as input ROOT files.
 ## Quick visualisation
 
 Once a CSV is produced, you can inspect a single event with the plotting script
-in [`analyses/time-vs-z-plots/`](https://github.com/eic/eic-ai-background/tree/main/analyses/time-vs-z-plots):
+in [`analyses/time-vs-z-plots/`](https://github.com/eic/ai-epic-background/tree/main/analyses/time-vs-z-plots):
 
 ```bash
 uv run python ../analyses/time-vs-z-plots/background_analysis.py output.csv 0 -o event_0_hits.png

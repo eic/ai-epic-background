@@ -6,7 +6,7 @@ import lightbox from "vitepress-plugin-lightbox"
 export default withMermaid({
     title: 'EIC AI Background',
     description: 'Background analysis pipelines and AI/ML datasets for the EIC ePIC detector',
-    base: '/eic-ai-background/',
+    base: '/ai-epic-background/',
 
     head: [
         ['link', { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css' }],
@@ -18,7 +18,7 @@ export default withMermaid({
             { text: 'Home', link: '/' },
             { text: 'CSV Convert', link: '/csv-convert' },
             { text: 'Full-Sim Pipeline', link: '/full-sim-pipeline' },
-            { text: 'GitHub', link: 'https://github.com/eic/eic-ai-background' },
+            { text: 'GitHub', link: 'https://github.com/eic/ai-epic-background' },
         ],
 
         sidebar: [
@@ -63,7 +63,7 @@ export default withMermaid({
         },
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/eic/eic-ai-background' }
+            { icon: 'github', link: 'https://github.com/eic/ai-epic-background' }
         ],
 
         search: {
@@ -76,7 +76,7 @@ export default withMermaid({
         },
 
         editLink: {
-            pattern: 'https://github.com/eic/eic-ai-background/edit/main/docs/:path',
+            pattern: 'https://github.com/eic/ai-epic-background/edit/main/docs/:path',
             text: 'Edit this page on GitHub'
         },
 

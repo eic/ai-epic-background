@@ -1,14 +1,14 @@
-# eic-ai-background
+# ai-epic-background
 
 Background-rich datasets and full-simulation pipelines for the **ePIC** detector at
 the Electron-Ion Collider — built for both physics analysis and AI / ML training.
 
-📖 **[Documentation site](https://eic.github.io/eic-ai-background/)**
+📖 **[Documentation site](https://eic.github.io/ai-epic-background/)**
 
 ## What's in here
 
 ```
-eic-ai-background/
+ai-epic-background/
 ├── csv_convert/          # ROOT (edm4eic) → CSV converter + Snakemake workflow
 ├── analyses/             # Python analyses on the CSVs (one subfolder per analysis)
 ├── full-sim-pipeline/    # ePIC simulation orchestration (afterburner → npsim → EICrecon)
