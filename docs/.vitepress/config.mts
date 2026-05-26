@@ -16,6 +16,7 @@ export default withMermaid({
     themeConfig: {
         nav: [
             { text: 'Home', link: '/' },
+            { text: 'Data', link: '/data' },
             { text: 'CSV Convert', link: '/csv-convert' },
             { text: 'Full-Sim Pipeline', link: '/full-sim-pipeline' },
             { text: 'GitHub', link: 'https://github.com/eic/ai-epic-background' },
@@ -28,6 +29,13 @@ export default withMermaid({
                 items: [
                     { text: 'Overview', link: '/' },
                     { text: 'Data Format', link: '/data-format' },
+                ]
+            },
+            {
+                text: 'Data',
+                collapsed: false,
+                items: [
+                    { text: 'Available Datasets', link: '/data' },
                 ]
             },
             {
