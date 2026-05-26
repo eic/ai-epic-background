@@ -48,5 +48,6 @@ plots/
 *.log
 logs/
 
-# Claude / agent worktrees
-.claude/
+# Claude / agent worktrees — but keep shared skills tracked
+.claude/*
+!.claude/skills/
