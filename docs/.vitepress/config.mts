@@ -19,6 +19,7 @@ export default withMermaid({
             { text: 'Data', link: '/data' },
             { text: 'CSV Convert', link: '/csv-convert' },
             { text: 'Full-Sim Pipeline', link: '/full-sim-pipeline' },
+            { text: 'Backgrounds', link: '/background' },
             { text: 'GitHub', link: 'https://github.com/eic/ai-epic-background' },
         ],
 
@@ -54,6 +55,7 @@ export default withMermaid({
                     { text: 'Overview', link: '/full-sim-pipeline' },
                     { text: 'Job Creator', link: '/full-sim-pipeline-jobs' },
                     { text: 'Campaigns', link: '/full-sim-pipeline-campaigns' },
+                    { text: 'Backgrounds', link: '/background' },
                 ]
             },
             {

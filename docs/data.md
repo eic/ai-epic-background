@@ -39,3 +39,52 @@ _Last updated: **2026-05-26**_
 ### Bkg_Exact1S_2us
 
 <DidTable :rows='[{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1","kind":"RECO","energy":"10x100"},{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/D0_ABCONV/pythia8.306-1.1/10x100/q2_100/hiDiv","kind":"RECO","energy":"10x100"},{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"RECO","energy":"10x275"}]' />
+
+## Using these DIDs
+
+A DID is just a pointer — it resolves to a set of files (PFNs) on Rucio
+Storage Elements. Two upstream pages cover this in full; this section is
+the bare minimum to get you started.
+
+- 📚 [Rucio usage tutorial](https://eic.github.io/tutorial-file-access/02-rucio_usage/index.html) — setup, auth, full command reference.
+- 📚 [Use-cases tutorial](https://eic.github.io/tutorial-file-access/03-use_cases/index.html) — download vs. stream, batch workflows, common patterns.
+
+### 1. One-time setup (inside `eic-shell`)
+
+```bash
+# Voms / OIDC auth — pick what matches your account (see Rucio tutorial).
+rucio whoami
+```
+
+If `rucio whoami` returns your identity, you're done. If not, follow the
+auth steps on the [Rucio usage tutorial](https://eic.github.io/tutorial-file-access/02-rucio_usage/index.html).
+
+### 2. See what's inside a dataset
+
+```bash
+rucio did list-content 'epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1'
+```
+
+### 3. Download files locally
+
+```bash
+rucio download 'epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1'
+```
+
+Downloads land in a directory tree mirroring the DID. Add `--nrandom N`
+to pull only a sample, or `--rse <RSE>` to pin a storage element.
+
+### 4. Stream over XRootD (no local copy)
+
+Most analyses can read directly from XRootD — faster on the JLab farm and
+saves disk:
+
+```bash
+# List replica URLs for a DID
+rucio list-file-replicas --pfns 'epic:/RECO/26.04.1/.../minQ2=1' | head
+
+# Then open them directly, e.g. in ROOT / uproot / EICrecon:
+root -l 'root://dtn-eic.jlab.org//volatile/eic/EPIC/RECO/.../file.edm4eic.root'
+```
+
+See [use-cases](https://eic.github.io/tutorial-file-access/03-use_cases/index.html) for the recommended patterns when running many jobs over a dataset.
