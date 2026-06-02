@@ -50,6 +50,10 @@ rucio_did_filters: "is_background_mixed=true"
 rucio_did_pattern: "epic:*RECO/26.04.1*"
 datasets_dir: "${base_dir}/datasets"
 
+# You can put a single dataset YAML in datasets_dir for testing, or glob multiple YAMLs for the full campaign.
+#datasets_glob: "*.yaml"
+datasets_glob: "*.yaml"
+
 # Tokens stripped from the per-dataset slug (constant background config).
 # Full DID is always preserved inside each dataset YAML.
 slug_drop_tokens: ["GoldCt", "10um"]
