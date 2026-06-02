@@ -43,6 +43,7 @@ Run inside eic-shell (or anywhere `rucio` is authenticated):
 import argparse
 import os
 import re
+import shlex
 import subprocess
 import sys
 from glob import glob
@@ -51,7 +52,19 @@ import yaml
 
 from job_creator import load_config
 
-ENERGY_RE = re.compile(r"^\d+x\d+$")
+ENERGY_RE = re.compile(r"^\d+x\d+$")       # 10x100
+FRAME_LEN_RE = re.compile(r"^\d+us$")      # 2us
+MINQ2_RE = re.compile(r"minQ2=(\S+)")
+Q2_ALT_RE = re.compile(r"q2_(\w+)")
+GEN_RE = re.compile(r"^([A-Za-z]+\d*)")    # pythia8  (from pythia8NCDIS...)
+XANGLE_RE = re.compile(r"xAngle=(-?\d+(?:\.\d+)?)")
+DIV_RE = re.compile(r"(hiDiv|loDiv)(?:_(\d+))?")
+
+# Token -> canonical value mappings (extend as new conventions appear).
+DATA_TYPE = {"RECO": "reconstructed", "FULL": "simulated"}
+FRAME_TYPE = {"Exact1S": "1sig-per-fr"}
+PROCESS = {"DIS": "dis", "SIDIS": "sidis"}
+INTERACTION = {"NC": "nc", "CC": "cc"}
 
 
 def make_rucio_runner(container, bind_dirs):
@@ -68,7 +81,9 @@ def make_rucio_runner(container, bind_dirs):
 
     def run(args):
         cmd = [*prefix, *args]
-        print("  $ " + " ".join(cmd))
+        # Quote for display only; execution uses the argv list (no shell), so
+        # the literal '*' is passed straight to rucio for server-side matching.
+        print("  $ " + " ".join(shlex.quote(c) for c in cmd))
         try:
             out = subprocess.run(
                 cmd, check=True, text=True, capture_output=True,
@@ -102,31 +117,113 @@ def parse_pfn_lines(lines):
     return [ln.strip() for ln in lines if ln.strip().startswith("root://")]
 
 
-def did_to_slug(did, drop_tokens=()):
-    """Collapse a DID into one flat, filesystem-safe slug.
+def parse_metadata(did, sample_file=None):
+    """Extract structured metadata from a DID (+ a sample filename).
 
-    Everything after the detector-config segment (epic_craterlake) is joined
-    with '_'. Tokens in `drop_tokens` (e.g. constant GoldCt/10um) are removed.
-    The full DID is stored in the YAML, so this slug can be lossy/pretty.
+    Example DID:
+      epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+    Example file:
+      ...pythia8NCDIS_10x100_minQ2=1_beamEffects_xAngle=-0.025_hiDiv_1.0000.eicrecon.edm4eic.root
+
+    Returns a dict; unknown tokens fall back to a lowercased form rather than
+    failing, so new conventions degrade gracefully (the full DID is also kept).
+    """
+    assert did.startswith("epic:/"), did
+    parts = did[len("epic:/"):].split("/")
+    partition = parts[0]
+    tail = parts[3:]  # everything after RECO/<campaign>/<detector>
+
+    meta = {
+        "data_type": DATA_TYPE.get(partition, partition.lower()),
+        "campaign": parts[1] if len(parts) > 1 else None,
+        "detector": parts[2] if len(parts) > 2 else None,
+        "has_background": False,
+    }
+
+    # --- background segment, e.g. "Bkg_Exact1S_2us" ---
+    for tok in tail:
+        sub = tok.split("_")
+        if sub[0] == "Bkg":
+            meta["has_background"] = True
+            for s in sub[1:]:
+                if FRAME_LEN_RE.match(s):
+                    meta["frame_len"] = s
+                elif s in FRAME_TYPE:
+                    meta["frame_type"] = FRAME_TYPE[s]
+                else:
+                    meta.setdefault("frame_type", s.lower())
+            break
+
+    # --- beampipe, e.g. "GoldCt/10um" -> gold-coat-10um ---
+    if "GoldCt" in tail:
+        i = tail.index("GoldCt")
+        thick = tail[i + 1] if i + 1 < len(tail) else None
+        meta["beampipe"] = "gold-coat" + (f"-{thick}" if thick else "")
+
+    # --- physics process / interaction (DIS, NC, ...) ---
+    process = next((PROCESS[t] for t in tail if t in PROCESS), None)
+    interaction = next((INTERACTION[t] for t in tail if t in INTERACTION), None)
+
+    # --- beam energy ---
+    meta["beam_energy"] = next((t for t in tail if ENERGY_RE.match(t)), None)
+
+    # --- q2 ("minQ2=1" -> gt-1, "q2_100" -> gt-100) ---
+    m = MINQ2_RE.search(did) or Q2_ALT_RE.search(did)
+    meta["q2"] = f"gt-{m.group(1)}" if m else None
+
+    # --- generator + beam effects from a sample filename ---
+    generator = "pythia8"
+    if sample_file:
+        fn = os.path.basename(sample_file)
+        gm = GEN_RE.match(fn)
+        if gm:
+            generator = gm.group(1).lower()
+        meta["beam_effects"] = "beamEffects" in fn
+        xm = XANGLE_RE.search(fn)
+        if xm:
+            meta["beam_crossing_angle"] = float(xm.group(1))
+        dm = DIV_RE.search(fn)
+        if dm:
+            meta["beam_divergence"] = dm.group(1).lower() + \
+                (f"_{dm.group(2)}" if dm.group(2) else "")
+    meta["generator"] = generator
+
+    # --- physics = generator-interaction-process (e.g. pythia8-nc-dis) ---
+    if process:
+        bits = [generator] + ([interaction] if interaction else []) + [process]
+        meta["physics"] = "-".join(bits)
+
+    return meta
+
+
+def rename_token(tok):
+    """Tidy a single DID path token for use in a slug (no '=' in names)."""
+    m = re.fullmatch(r"minQ2=(\S+)", tok)
+    if m:
+        return f"q2-gt-{m.group(1)}"   # minQ2=1 -> q2-gt-1
+    return tok
+
+
+def did_to_slug(did):
+    """Flatten the DID path into one directory slug that mirrors the DID.
+
+    Everything after the detector segment (epic_craterlake) is kept and joined
+    with '_', so the slug stays close to the DID and it's obvious which dataset
+    a directory came from. Only light tidying is applied (e.g. minQ2=1 ->
+    q2-gt-1); '=' and other odd chars never appear in the name.
+
+      .../Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+      -> Bkg_Exact1S_2us_GoldCt_10um_DIS_NC_10x100_q2-gt-1
     """
     assert did.startswith("epic:/"), did
     parts = did[len("epic:/"):].split("/")
     if "epic_craterlake" in parts:
         tail = parts[parts.index("epic_craterlake") + 1:]
     else:
-        tail = parts[3:]  # skip RECO/<ver>/<det>
-    drop = set(drop_tokens)
-    tail = [p for p in tail if p and p not in drop]
-    slug = "_".join(tail)
-    # Keep alnum . _ = + - ; replace anything else.
-    return re.sub(r"[^A-Za-z0-9._=+-]", "_", slug)
-
-
-def energy_of(did):
-    for p in did[len("epic:/"):].split("/"):
-        if ENERGY_RE.match(p):
-            return p
-    return None
+        tail = parts[3:]  # skip RECO/<campaign>/<detector>
+    slug = "_".join(rename_token(t) for t in tail if t)
+    # Allow alnum . _ - only; anything else (incl. '=') becomes '_'.
+    return re.sub(r"[^A-Za-z0-9._-]", "_", slug)
 
 
 def main():
@@ -152,7 +249,6 @@ def main():
     if not container:
         sys.exit("ERROR: config has no 'container'.")
     bind_dirs = list(config.get("bind_dirs", []))
-    drop_tokens = list(config.get("slug_drop_tokens", []))
     max_files = args.max_files if args.max_files is not None \
         else int(config.get("max_files_per_dataset", 0))
 
@@ -171,8 +267,6 @@ def main():
     print(f"  filters: {filters}")
     print(f"  pattern: {pattern}")
     print(f"  output:  {datasets_dir}")
-    if drop_tokens:
-        print(f"  slug drops: {drop_tokens}")
     if max_files:
         print(f"  max files/dataset: {max_files}")
     print("=" * 70)
@@ -186,8 +280,7 @@ def main():
 
     written = []
     for i, did in enumerate(dids, 1):
-        slug = did_to_slug(did, drop_tokens)
-        print(f"[{i}/{len(dids)}] {slug}")
+        print(f"[{i}/{len(dids)}] {did}")
         pfns = parse_pfn_lines(run_rucio(
             ["replica", "list", "file", "--protocols", "root",
              "--pfns", "--rses", "isopenaccess", did]
@@ -198,20 +291,23 @@ def main():
             print(f"      WARN: no PFNs for {did} -- skipping")
             continue
 
+        meta = parse_metadata(did, sample_file=pfns[0])
+        slug = did_to_slug(did)
+
         out_path = os.path.join(datasets_dir, f"{slug}.yaml")
         with open(out_path, "w") as f:
             yaml.safe_dump(
                 {
                     "did": did,
                     "slug": slug,
-                    "energy": energy_of(did),
+                    "metadata": meta,
                     "n_files": len(pfns),
                     "files": pfns,
                 },
                 f, sort_keys=False, default_flow_style=False,
             )
         written.append(out_path)
-        print(f"      {len(pfns)} files -> {out_path}")
+        print(f"      {slug}  ({len(pfns)} files) -> {out_path}")
 
     print("\n" + "=" * 70)
     print(f"Wrote {len(written)} dataset YAML(s) to {datasets_dir}")
