@@ -117,6 +117,54 @@ def parse_pfn_lines(lines):
     return [ln.strip() for ln in lines if ln.strip().startswith("root://")]
 
 
+META_LINE_RE = re.compile(r"^(\w+):\s*(.*)$")
+
+
+def _convert_meta_value(raw):
+    """Coerce a rucio metadata string value to None / bool / int / float / str."""
+    v = raw.strip()
+    if v == "" or v == "None":
+        return None
+    if v == "True":
+        return True
+    if v == "False":
+        return False
+    try:
+        return int(v)
+    except ValueError:
+        pass
+    try:
+        return float(v)
+    except ValueError:
+        pass
+    return v
+
+
+def parse_rucio_metadata(lines, drop_none=True):
+    """Parse `rucio did metadata list --plugin ALL` aligned `key:  value` output.
+
+    Splits on the first ':' only (so datetime values keep their colons) and
+    type-converts each value. None-valued keys are dropped by default to keep
+    the data card tidy.
+    """
+    meta = {}
+    for line in lines:
+        m = META_LINE_RE.match(line.rstrip())
+        if not m:
+            continue
+        val = _convert_meta_value(m.group(2))
+        if drop_none and val is None:
+            continue
+        meta[m.group(1)] = val
+    return meta
+
+
+def fetch_rucio_metadata(run_rucio, did):
+    """Return the rucio metadata dict for one DID (via the container runner)."""
+    return parse_rucio_metadata(
+        run_rucio(["did", "metadata", "list", "--plugin", "ALL", did]))
+
+
 def parse_metadata(did, sample_file=None):
     """Extract structured metadata from a DID (+ a sample filename).
 
@@ -293,6 +341,7 @@ def main():
 
         meta = parse_metadata(did, sample_file=pfns[0])
         slug = did_to_slug(did)
+        rucio_meta = fetch_rucio_metadata(run_rucio, did)
 
         out_path = os.path.join(datasets_dir, f"{slug}.yaml")
         with open(out_path, "w") as f:
@@ -301,6 +350,7 @@ def main():
                     "did": did,
                     "slug": slug,
                     "metadata": meta,
+                    "rucio_metadata": rucio_meta,
                     "n_files": len(pfns),
                     "files": pfns,
                 },
