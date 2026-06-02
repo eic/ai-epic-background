@@ -124,8 +124,10 @@ class JobCreator:
             'script_version': '1.0.0'
         }
         
-        # Update config with parsed arguments
-        self.config['input_files'] = [os.path.abspath(f) for f in input_files]
+        # Update config with parsed arguments.
+        # Keep remote URLs (e.g. root:// XRootD PFNs) verbatim; only localize real paths.
+        self.config['input_files'] = [f if '://' in f else os.path.abspath(f)
+                                      for f in input_files]
         self.config['output_dir'] = os.path.abspath(output_dir)
         self.config['jobs_dir'] = os.path.join(self.config['output_dir'], 'jobs')
         self.config['logs_dir'] = os.path.join(self.config['output_dir'], 'logs')

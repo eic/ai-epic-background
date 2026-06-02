@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
-csv_convert_pipeline.py
+41_create_csv_eicrecon_jobs.py
 Generate and submit CSV conversion jobs using JobCreator.
-Processes .edm4eic.root files with ROOT macros to create CSV outputs.
+
+Reads the per-dataset YAMLs written by 42_create_datasets_list.py and streams
+each dataset's root:// PFNs through the ROOT macros to produce CSV outputs.
+There is no local-file mode: to "convert a local directory", make a dataset
+YAML that lists those files (see 42_create_datasets_list.py).
 """
 
+import argparse
 import os
+from glob import glob
 from typing import Dict
 import textwrap
-from job_creator import JobCreator, find_inputs_or_skip, load_config, run_pipeline
+from job_creator import JobCreator, load_config, write_top_master_scripts
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 csv_convert_dir_default = os.path.join(os.path.dirname(this_dir), 'csv_convert')
@@ -45,10 +51,7 @@ def create_container_script_template():
       fi
     }}
 
-    convert "mc_dis"         "csv_mc_dis.cxx"         "{csv_mc_dis}"
-    convert "reco_dis"       "csv_reco_dis.cxx"       "{csv_reco_dis}"
-    convert "mcpart_lambda"  "csv_mcpart_lambda.cxx"  "{csv_mcpart_lambda}"
-    convert "reco_ff_lambda" "csv_reco_ff_lambda.cxx" "{csv_reco_ff_lambda}"
+    convert "trk_hits" "trk_hits_to_csv.cxx" "{trk_hits_to_scv}"
 
     echo "==========================================================================="
     echo "Done. Outputs in: {input_dir}"
@@ -69,43 +72,37 @@ def make_custom_params_updater(config_path):
 
         params['csv_convert_dir'] = config.get('csv_convert_dir', csv_convert_dir_default)
         params['input_dir'] = input_dir
-        params['csv_mc_dis'] = os.path.join(output_dir, f"{csv_basename}.mc_dis.csv")
-        params['csv_reco_dis'] = os.path.join(output_dir, f"{csv_basename}.reco_dis.csv")
-        params['csv_mcpart_lambda'] = os.path.join(output_dir, f"{csv_basename}.mcpart_lambda.csv")
-        params['csv_reco_ff_lambda'] = os.path.join(output_dir, f"{csv_basename}.reco_ff_lambda.csv")
+        params['trk_hits_to_scv'] = os.path.join(output_dir, f"{csv_basename}.trk_hits.csv")
+        # params['csv_reco_dis'] = os.path.join(output_dir, f"{csv_basename}.reco_dis.csv")
+        # params['csv_mcpart_lambda'] = os.path.join(output_dir, f"{csv_basename}.mcpart_lambda.csv")
+        # params['csv_reco_ff_lambda'] = os.path.join(output_dir, f"{csv_basename}.reco_ff_lambda.csv")
 
         return params
     return custom_params_updater
 
 
-def output_name_func(input_file, output_dir):
-    """Output files are created in the same directory as input."""
-    return os.path.dirname(input_file)
+def build_dataset_creator(config, slug, files, output_base, config_path):
+    """Build a JobCreator for one dataset (streamed root:// PFNs).
 
-
-def process_energy(config, energy, config_path):
-    """Build a JobCreator for one beam energy."""
+    Output (and per-dataset jobs/logs) land under <output_base>/<slug>.
+    """
     csv_convert_dir = config.get('csv_convert_dir', csv_convert_dir_default)
-    print(f"CSV Macros: {csv_convert_dir}")
-
-    input_files = find_inputs_or_skip(
-        config.eicrecon_output, '*.edm4eic.root', energy, config.csv_eicrecon_output
-    )
-    if input_files is None:
-        return None
+    output_dir = os.path.join(output_base, slug)
 
     bind_dirs = config.bind_dirs.copy() if 'bind_dirs' in config else []
     if csv_convert_dir not in bind_dirs:
         bind_dirs.append(csv_convert_dir)
 
     runner = JobCreator(
-        input_files=input_files,
-        output_file_name_func=output_name_func,
-        output_dir=config.csv_eicrecon_output,
+        input_files=list(files),
+        # CSV paths are computed by the params updater from output_dir; this
+        # func only needs to return something sane per file.
+        output_file_name_func=lambda input_file, output_dir: output_dir,
+        output_dir=output_dir,
         bind_dirs=bind_dirs,
         events=config.event_count,
         container=config.container,
-        beam_config=energy,
+        beam_config=slug,
     )
     runner.container_script_template = create_container_script_template()
     runner.container_script_params_updater = make_custom_params_updater(config_path)
@@ -113,5 +110,40 @@ def process_energy(config, energy, config_path):
     return runner
 
 
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate CSV conversion jobs from dataset YAMLs.")
+    parser.add_argument('-c', '--config', required=True, help="Path to config YAML file")
+    args = parser.parse_args()
+
+    config = load_config(args.config)
+    datasets_dir = os.path.abspath(config.datasets_dir)
+    output_base = os.path.abspath(config.csv_eicrecon_output)
+
+    yamls = sorted(glob(os.path.join(datasets_dir, '*.yaml')))
+    if not yamls:
+        raise SystemExit(
+            f"No dataset YAMLs in {datasets_dir}. "
+            f"Run 42_create_datasets_list.py -c {args.config} first.")
+
+    print(f"Datasets: {len(yamls)} YAML(s) in {datasets_dir}")
+    print(f"Output base: {output_base}")
+
+    creators = []
+    for y in yamls:
+        ds = load_config(y)
+        files = list(ds.get('files', []))
+        if not files:
+            print(f"  Skipping {os.path.basename(y)}: no files")
+            continue
+        print(f"\n--- {ds.slug} ({len(files)} files) ---")
+        creators.append(
+            build_dataset_creator(config, ds.slug, files, output_base, config_path=args.config)
+        )
+
+    write_top_master_scripts(creators, top_dir=output_base)
+    print("ALL DATASETS PROCESSED SUCCESSFULLY")
+
+
 if __name__ == "__main__":
-    run_pipeline(process_energy, description="Generate CSV conversion jobs (eicrecon).")
+    main()
