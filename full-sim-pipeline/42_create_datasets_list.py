@@ -54,21 +54,34 @@ from job_creator import load_config
 ENERGY_RE = re.compile(r"^\d+x\d+$")
 
 
-def run_rucio(args):
-    """Run a rucio command (list of argv) and return stdout lines."""
-    print("  $ rucio " + " ".join(args))
-    try:
-        out = subprocess.run(
-            ["rucio", *args],
-            check=True, text=True, capture_output=True,
-        ).stdout
-    except FileNotFoundError:
-        sys.exit("ERROR: 'rucio' not found on PATH. Run inside eic-shell.")
-    except subprocess.CalledProcessError as e:
-        sys.stderr.write(e.stdout or "")
-        sys.stderr.write(e.stderr or "")
-        sys.exit(f"ERROR: rucio command failed (exit {e.returncode}).")
-    return out.splitlines()
+def make_rucio_runner(container, bind_dirs):
+    """Return a run(args) that executes `rucio <args>` inside the container.
+
+    rucio is run via `singularity exec -B <d>:<d> ... <container> rucio ...`
+    so the host does not need rucio on PATH.
+    """
+    bindings = []
+    for d in bind_dirs:
+        d = os.path.abspath(d)
+        bindings += ["-B", f"{d}:{d}"]
+    prefix = ["singularity", "exec", *bindings, container, "rucio"]
+
+    def run(args):
+        cmd = [*prefix, *args]
+        print("  $ " + " ".join(cmd))
+        try:
+            out = subprocess.run(
+                cmd, check=True, text=True, capture_output=True,
+            ).stdout
+        except FileNotFoundError:
+            sys.exit("ERROR: 'singularity' not found on PATH.")
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write(e.stdout or "")
+            sys.stderr.write(e.stderr or "")
+            sys.exit(f"ERROR: rucio command failed (exit {e.returncode}).")
+        return out.splitlines()
+
+    return run
 
 
 def parse_did_lines(lines):
@@ -135,6 +148,10 @@ def main():
     datasets_dir = config.get("datasets_dir", None)
     if not datasets_dir:
         sys.exit("ERROR: config has no 'datasets_dir'.")
+    container = config.get("container", None)
+    if not container:
+        sys.exit("ERROR: config has no 'container'.")
+    bind_dirs = list(config.get("bind_dirs", []))
     drop_tokens = list(config.get("slug_drop_tokens", []))
     max_files = args.max_files if args.max_files is not None \
         else int(config.get("max_files_per_dataset", 0))
@@ -145,8 +162,12 @@ def main():
         for f in glob(os.path.join(datasets_dir, "*.yaml")):
             os.remove(f)
 
+    run_rucio = make_rucio_runner(container, bind_dirs)
+
     print("=" * 70)
     print("RUCIO DATASET DISCOVERY")
+    print(f"  container: {container}")
+    print(f"  binds:   {bind_dirs}")
     print(f"  filters: {filters}")
     print(f"  pattern: {pattern}")
     print(f"  output:  {datasets_dir}")
