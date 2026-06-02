@@ -17,6 +17,7 @@ export default withMermaid({
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Data', link: '/data' },
+            { text: 'Campaign 26.04', link: '/campaign_2026-04/' },
             { text: 'CSV Convert', link: '/csv-convert' },
             { text: 'Full-Sim Pipeline', link: '/full-sim-pipeline' },
             { text: 'Backgrounds', link: '/background' },
@@ -37,6 +38,13 @@ export default withMermaid({
                 collapsed: false,
                 items: [
                     { text: 'Available Datasets', link: '/data' },
+                ]
+            },
+            {
+                text: 'Campaigns',
+                collapsed: false,
+                items: [
+                    { text: '26.04.1-stable', link: '/campaign_2026-04/' },
                 ]
             },
             {
