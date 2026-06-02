@@ -11,6 +11,7 @@ YAML that lists those files (see 42_create_datasets_list.py).
 
 import argparse
 import os
+import re
 from glob import glob
 from typing import Dict
 import textwrap
@@ -59,6 +60,27 @@ def create_container_script_template():
 
 
 
+def csv_file_id(input_file):
+    """Short, unique CSV id from a root filename: its trailing file index.
+
+    The name ends in "<divergence>.<index>", e.g. "..._hiDiv_1.0000" where the
+    "1" belongs to hiDiv_1 and ".0000" is the file index. We keep only the
+    index (the last digit run after the dot):
+
+        pythia8NCDIS_..._hiDiv_1.0000.eicrecon.edm4eic.root -> "0000"
+
+    Within a dataset files differ only by this index, so it is unique.
+    Falls back to the full stripped basename if no trailing number is found.
+    """
+    name = os.path.basename(input_file)
+    for suffix in ('.eicrecon.edm4eic.root', '.edm4eic.root', '.root'):
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+    m = re.search(r'(\d+)$', name)
+    return m.group(1) if m else name
+
+
 def make_custom_params_updater(config_path):
     """Create a custom params updater with access to the config path."""
     def custom_params_updater(params: Dict) -> Dict:
@@ -68,11 +90,11 @@ def make_custom_params_updater(config_path):
         input_file = params['input_file']
         input_dir = os.path.dirname(input_file)
         output_dir = params['output_dir']
-        csv_basename = os.path.basename(input_file).replace('.edm4eic.root', '')
+        file_id = csv_file_id(input_file)
 
         params['csv_convert_dir'] = config.get('csv_convert_dir', csv_convert_dir_default)
         params['input_dir'] = input_dir
-        params['trk_hits_to_scv'] = os.path.join(output_dir, f"{csv_basename}.trk_hits.csv")
+        params['trk_hits_to_scv'] = os.path.join(output_dir, f"{file_id}.trk_hits.csv")
         # params['csv_reco_dis'] = os.path.join(output_dir, f"{csv_basename}.reco_dis.csv")
         # params['csv_mcpart_lambda'] = os.path.join(output_dir, f"{csv_basename}.mcpart_lambda.csv")
         # params['csv_reco_ff_lambda'] = os.path.join(output_dir, f"{csv_basename}.reco_ff_lambda.csv")
