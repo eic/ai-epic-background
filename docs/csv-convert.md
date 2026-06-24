@@ -19,13 +19,7 @@ For example, the `time vs z` per-event plotting script lives at
 
 ## Pipeline
 
-```mermaid
-graph LR
-    A[".edm4eic.root files"] -->|root macro or cmake build| B["trk_hits_to_csv.cxx"]
-    B --> C[".csv files"]
-    C --> D["Python plots"]
-    C --> E["AI/ML training"]
-```
+![.edm4eic.root files → trk_hits_to_csv.cxx → .csv files → Python plots and AI/ML training](/diagrams/csv-convert-flow.svg)
 
 ## Why this design?
 

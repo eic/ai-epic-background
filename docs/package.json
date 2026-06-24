@@ -32,14 +32,8 @@
   },
   "homepage": "https://eic.github.io/ai-epic-background/",
   "devDependencies": {
-    "mermaid": "^11.15.0",
-    "vitepress": "^1.6.4",
+    "vitepress": "^2.0.0-alpha.17",
     "vitepress-plugin-lightbox": "^1.0.3",
-    "vitepress-plugin-mermaid": "^2.0.17",
     "echarts": "^5.3.3"
-  },
-  "dependencies": {
-    "katex": "^0.16.22",
-    "markdown-it-katex": "^2.0.3"
   }
 }

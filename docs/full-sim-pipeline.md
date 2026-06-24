@@ -11,18 +11,7 @@ file plus a SLURM submitter script.
 
 ## Pipeline stages
 
-```mermaid
-graph LR
-    A["HEPMC events"] -->|01/02 convert ROOT/HEPMC| B["normalised HEPMC"]
-    B -->|10 afterburner| C["afterburner ROOT"]
-    C -->|20 npsim| D["edm4hep .root"]
-    C -->|21 npsim saveall| D2["edm4hep .root (all hits)"]
-    D -->|30 EICrecon| E["edm4eic .root"]
-    D -->|40 dd4hep CSV| F1["dd4hep CSV"]
-    E -->|41 eicrecon CSV| F2["eicrecon CSV"]
-    F1 --> G["analysis (50/51)"]
-    F2 --> G
-```
+![Full-sim pipeline stages: HEPMC → convert → afterburner → npsim (edm4hep, plus saveall all-hits branch) → EICrecon (edm4eic) → dd4hep and eicrecon CSV → analysis](/diagrams/full-sim-pipeline.svg)
 
 ## Scripts
 

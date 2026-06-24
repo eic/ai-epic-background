@@ -38,15 +38,7 @@ plotting scripts, or fed directly into a `torch.utils.data.Dataset` for ML train
 
 ## Pipeline at a glance
 
-```mermaid
-graph LR
-    A["HEPMC events"] -->|afterburner| B["afterburner ROOT"]
-    B -->|npsim| C["edm4hep .root"]
-    C -->|EICrecon| D["edm4eic .root"]
-    D -->|trk_hits_to_csv| E[".csv (hits)"]
-    E --> F["AI / ML training"]
-    E --> G["Python analysis"]
-```
+![HEPMC events → afterburner ROOT → edm4hep → edm4eic → CSV hits → AI/ML training and Python analysis](/diagrams/pipeline-overview.svg)
 
 For the background-mixing step that sits between afterburner and `npsim`, see the
 [Backgrounds](/background) page.

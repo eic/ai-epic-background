@@ -1,15 +1,13 @@
-import markdownItKatex from 'markdown-it-katex';
-import { withMermaid } from "vitepress-plugin-mermaid";
+import { defineConfig } from "vitepress";
 import lightbox from "vitepress-plugin-lightbox"
 
 
-export default withMermaid({
+export default defineConfig({
     title: 'EIC AI Background',
     description: 'Background analysis pipelines and AI/ML datasets for the EIC ePIC detector',
     base: '/ai-epic-background/',
 
     head: [
-        ['link', { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css' }],
         ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
     ],
 
@@ -103,7 +101,6 @@ export default withMermaid({
 
     markdown: {
         config: (md) => {
-            md.use(markdownItKatex);
             md.use(lightbox, {});
         }
     },
