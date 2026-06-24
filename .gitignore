@@ -51,3 +51,5 @@ logs/
 # Claude / agent worktrees — but keep shared skills tracked
 .claude/*
 !.claude/skills/
+
+csv_convert/build-docker/

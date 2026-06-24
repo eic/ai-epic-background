@@ -53,6 +53,7 @@ struct HitRecord {
     // Particle identification
     int32_t prt_pdg;                 // PDG code of the particle (e.g., 11=e-, 211=pi+, 2212=proton)
     int32_t prt_status;              // Generator status: 1=stable from generator, 0=created by Geant4
+    int32_t prt_origin;              // Origin flag, 0 - uknown, 1 - signal particle, 2 - g4 gen from signal, 3 - background, 4 genat4 gen from background
 
     // Particle kinematics
     double prt_energy;               // Total energy of particle [GeV]
@@ -93,6 +94,7 @@ struct HitRecord {
     // Tracker hit energy deposition
     float trk_hit_edep;              // Energy deposited in sensor [GeV]
     float trk_hit_edep_err;          // Energy deposition uncertainty [GeV]
+
 
     static std::string make_csv_header() {
         return "evt,hit_index,prt_index,"
@@ -375,6 +377,64 @@ std::optional<edm4eic::TrackerHit> get_tracker_hit(
     return std::nullopt;
 }
 
+/// Classifies a *generator-level* (non-zero) generatorStatus value into the
+/// signal / background bands defined by the merger's status-offset convention
+/// (see docs/background.md). Uses a generic threshold so new background sources
+/// don't require editing a table:
+///    status == 1 or 2          -> signal       (offset band 0)
+///    status >= 1000            -> background   (offset bands 2000, 3000, ...)
+///    anything else (e.g. 0)    -> unknown
+/// @return 1 for signal, 3 for background, 0 for unknown.
+inline int32_t classify_gen_status(int32_t gen_status) {
+    if (gen_status == 1 || gen_status == 2) return 1; // signal
+    if (gen_status >= 1000)                 return 3; // background offset band
+    return 0;                                         // unknown
+}
+
+/// Gets particle origin status.
+///
+/// The merger adds its status offset at the HepMC/generator level, *before*
+/// Geant4 runs. So in the simulated MCParticle collection only generator
+/// particles carry the offset in their generatorStatus; Geant4-created
+/// secondaries always have generatorStatus == 0 regardless of whether their
+/// ancestor was signal or background. For those we walk up the parent chain to
+/// the first generator ancestor (non-zero generatorStatus) and read its band.
+///
+/// @return
+///    0 - unknown (no generator ancestor found / unrecognised band),
+///    1 - signal particle,
+///    2 - g4 gen from signal,
+///    3 - background,
+///    4 - g4 gen from background
+int32_t get_origin_status(const MCParticle& particle) {
+    const int32_t gen_status = particle.getGeneratorStatus();
+
+    // Generator-level particle: read its own offset band directly.
+    if (gen_status != 0) {
+        return classify_gen_status(gen_status); // 1 signal, 3 background, 0 unknown
+    }
+
+    // Geant4-created secondary: trace up the parent chain to the first
+    // generator ancestor. A depth guard protects against cyclic/broken links.
+    MCParticle current = particle;
+    const int max_depth = 200;
+    for (int depth = 0; depth < max_depth; ++depth) {
+        if (current.parents_size() == 0) break;
+        MCParticle parent = current.getParents(0);
+        if (!parent.isAvailable()) break;
+
+        const int32_t parent_status = parent.getGeneratorStatus();
+        if (parent_status != 0) {
+            const int32_t band = classify_gen_status(parent_status);
+            if (band == 1) return 2; // g4 gen from signal
+            if (band == 3) return 4; // g4 gen from background
+            return 0;                // unrecognised band
+        }
+        current = parent;
+    }
+
+    return 0; // fallback: no generator ancestor found
+}
 
 // Specialized function for Tracker Hits
 void process_tracker_hits(const podio::Frame& event, const std::string& assoc_col_name, int evt_id) {
@@ -450,12 +510,15 @@ void process_tracker_hits(const podio::Frame& event, const std::string& assoc_co
         //         );
         // }
 
+        int origin = get_origin_status(particle);
+
         HitRecord record;
         record.evt = evt_id;
         record.hit_index = hit_assoc.id().index;
         record.prt_index = particle.id().index;
         record.prt_pdg = particle.getPDG();
         record.prt_status = particle.getGeneratorStatus();
+        record.prt_origin = origin;
         record.prt_energy = particle.getEnergy();
         record.prt_charge = particle.getCharge();
         record.prt_mom_x = particle.getMomentum().x;

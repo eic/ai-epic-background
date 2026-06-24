@@ -1,6 +1,6 @@
 # -------------  CMakeLists.txt  -----------------
 cmake_minimum_required(VERSION 3.18)
-project(cpp_meson_structure LANGUAGES CXX)
+project(ai_epic_background LANGUAGES CXX)
 
 # ----- compiler settings ------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
@@ -25,6 +25,16 @@ find_package(nlohmann_json)
 add_executable(trk_hits_to_csv trk_hits_to_csv.cxx)
 
 target_link_libraries(trk_hits_to_csv
+        PRIVATE
+        ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist ROOT::Gpad
+        podio::podio podio::podioRootIO podio::podioDict
+        EDM4HEP::edm4hep EDM4HEP::edm4hepDict
+        EDM4EIC::edm4eic EDM4EIC::edm4eicDict
+        fmt::fmt)
+
+add_executable(trk_particles_to_csv trk_particles_to_csv.cxx)
+
+target_link_libraries(trk_particles_to_csv
         PRIVATE
         ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist ROOT::Gpad
         podio::podio podio::podioRootIO podio::podioDict
