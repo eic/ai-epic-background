@@ -39,7 +39,13 @@ _Last updated: **2026-06-29**_
 
 ### Bkg_Exact1S_2us
 
-<DidTable :rows='[{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000","kind":"RECO","energy":"10x275"}]' />
+<DidTable :rows='[
+  {
+    "did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1",
+    "kind":"FULL",
+    "energy":"10x100"
+  },
+  {"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000","kind":"RECO","energy":"10x100"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100","kind":"RECO","energy":"10x275"},{"did":"epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000","kind":"FULL","energy":"10x275"},{"did":"epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000","kind":"RECO","energy":"10x275"}]' />
 
 ## Campaign 26.03.0
 
@@ -48,6 +54,38 @@ _Last updated: **2026-06-29**_
 <DidTable :rows='[{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1","kind":"RECO","energy":"10x100"},{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/D0_ABCONV/pythia8.306-1.1/10x100/q2_100/hiDiv","kind":"RECO","energy":"10x100"},{"did":"epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1","kind":"RECO","energy":"10x275"}]' />
 
 <!-- END TABLES -->
+
+## Campaign 25.10
+
+Not available on ruci, but can be downloaded from JLab xrootd
+
+```bash
+/volatile/eic/EPIC/RECO/25.10.0/epic_craterlake/Bkg_1SignalPer2usFrame/
+Synrad_10GeV_Vac_10000Ahr_Runtime_50s_Egas_10GeV_Hgas_275GeV
+
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/
+DIS  EXCLUSIVE  SIDIS  Synrad_18GeV_Vac_10000Ahr_Runtime_50s_Egas_18GeV_Hgas_275GeV
+
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/
+DDVCS_ABCONV  DVMP
+
+ls /volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/
+NC
+10x100  10x275
+
+ls /volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/SIDIS
+
+ls /volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_Exactly1SignalPer2usFrame
+EXCLUSIVE  SIDIS
+
+# Only proton beamgas
+ls /volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_OnlyPer2usFrame/
+
+# Realistic - only SIDIS
+ls /volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_RealisticSignalPer2usFrame/
+SIDIS
+```
+
 
 ## Using these DIDs
 
