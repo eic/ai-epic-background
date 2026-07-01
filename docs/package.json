@@ -34,6 +34,6 @@
   "devDependencies": {
     "vitepress": "^2.0.0-alpha.17",
     "vitepress-plugin-lightbox": "^1.0.3",
-    "echarts": "^5.3.3"
+    "echarts": "^6.1.0"
   }
 }
