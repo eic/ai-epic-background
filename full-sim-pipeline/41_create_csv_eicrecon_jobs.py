@@ -53,6 +53,7 @@ def create_container_script_template():
     }}
 
     convert "trk_hits" "trk_hits_to_csv.cxx" "{trk_hits_to_scv}"
+    convert "mc_particles" "mc_particles_to_csv.cxx" "{mc_particles_to_scv}"
 
     echo "==========================================================================="
     echo "Done. Outputs in: {input_dir}"
@@ -95,6 +96,7 @@ def make_custom_params_updater(config_path):
         params['csv_convert_dir'] = config.get('csv_convert_dir', csv_convert_dir_default)
         params['input_dir'] = input_dir
         params['trk_hits_to_scv'] = os.path.join(output_dir, f"{file_id}.trk_hits.csv")
+        params['mc_particles_to_scv'] = os.path.join(output_dir, f"{file_id}.mc_particles.csv")
         # params['csv_reco_dis'] = os.path.join(output_dir, f"{csv_basename}.reco_dis.csv")
         # params['csv_mcpart_lambda'] = os.path.join(output_dir, f"{csv_basename}.mcpart_lambda.csv")
         # params['csv_reco_ff_lambda'] = os.path.join(output_dir, f"{csv_basename}.reco_ff_lambda.csv")

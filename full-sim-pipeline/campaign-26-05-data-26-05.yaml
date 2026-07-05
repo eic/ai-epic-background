@@ -10,13 +10,10 @@ bind_dirs: [
 ]
 
 # Container
-container: "/cvmfs/singularity.opensciencegrid.org/eicweb/eic_xl:26.04.1-stable"
-#container: "/work/eic3/users/romanov/meson-structure-work/eicdev-eic-full-2026-06-01.sif"
-#container: "/work/eic3/users/romanov/meson-structure-work/eicrecon_ff_multicalo.sif"
-#container: "/work/eic3/users/romanov/meson-structure-work/eic-full-epictv.sif"
+container: "/cvmfs/singularity.opensciencegrid.org/eicweb/eic_xl:26.05.0-stable"
 
 # Scripts location
-scripts_dir: "/work/eic3/users/romanov/meson-structure-work/meson-structure/full-sim-pipeline"
+scripts_dir: "/work/eic3/users/romanov/ai-epic-background/full-sim-pipeline"
 
 # Test mode - set to true to test without actually submitting jobs
 dry_run: false
@@ -47,8 +44,8 @@ csv_dd4hep_output: "${base_dir}/csv_dd4hep${suffix}/${energy}"
 # dataset into datasets_dir. 41_create_csv_eicrecon_jobs.py then detects those
 # YAMLs and streams the root:// PFNs through the ROOT macros (no local copy).
 rucio_did_filters: "is_background_mixed=true"
-rucio_did_pattern: "epic:*RECO/26.04.1*"
-datasets_dir: "${base_dir}/datasets"
+rucio_did_pattern: "epic:*RECO/26.05*"
+datasets_dir: "${base_dir}/datasets-26-05"
 
 # You can put a single dataset YAML in datasets_dir for testing, or glob multiple YAMLs for the full campaign.
 #datasets_glob: "*.yaml"

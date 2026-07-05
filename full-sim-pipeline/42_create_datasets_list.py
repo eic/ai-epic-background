@@ -275,27 +275,18 @@ def did_to_slug(did):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-c", "--config", required=True, help="Campaign config YAML")
-    parser.add_argument("--max-files", type=int, default=None,
-                        help="Cap files per dataset (override config; 0 = all)")
-    parser.add_argument("--clean", action="store_true",
-                        help="Remove existing *.yaml in datasets_dir first")
+    parser.add_argument("--max-files", type=int, default=None, help="Cap files per dataset (override config; 0 = all)")
+    parser.add_argument("--clean", action="store_true", help="Remove existing *.yaml in datasets_dir first")
     args = parser.parse_args()
 
     config = load_config(args.config)
 
-    filters = config.get("rucio_did_filters", None)
-    pattern = config.get("rucio_did_pattern", None)
-    if not pattern:
-        sys.exit("ERROR: config has no 'rucio_did_pattern'.")
-    datasets_dir = config.get("datasets_dir", None)
-    if not datasets_dir:
-        sys.exit("ERROR: config has no 'datasets_dir'.")
-    container = config.get("container", None)
-    if not container:
-        sys.exit("ERROR: config has no 'container'.")
+    filters = config.get("rucio_did_filters")
+    pattern = config.get("rucio_did_pattern")
+    datasets_dir = config.get("datasets_dir")
+    container = config.get("container")
     bind_dirs = list(config.get("bind_dirs", []))
     max_files = args.max_files if args.max_files is not None \
         else int(config.get("max_files_per_dataset", 0))
