@@ -5,6 +5,7 @@ import JsonHistogram from "./components/JsonHistogram.vue";
 import PlotCompareViewer from "./components/PlotCompareViewer.vue";
 import VerticalComparePlot from "./components/VerticalComparePlot.vue";
 import DidTable from "./components/DidTable.vue";
+import DidStrips, { Tags, Tag, More, Dids } from "./components/DidStrips.vue";
 
 export default {
   extends: DefaultTheme,
@@ -15,5 +16,10 @@ export default {
     app.component('PlotCompareViewer', PlotCompareViewer);
     app.component('VerticalComparePlot', VerticalComparePlot);
     app.component('DidTable', DidTable);
+    app.component('DidStrips', DidStrips);
+    app.component('Tags', Tags);
+    app.component('Tag', Tag);
+    app.component('More', More);
+    app.component('Dids', Dids);
   }
 };

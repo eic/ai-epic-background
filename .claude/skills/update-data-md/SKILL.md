@@ -1,39 +1,29 @@
 ---
 name: update-data-md
-description: Use this skill when the user asks to update, refresh, regenerate, or rebuild `docs/data.md` — the catalog of available ePIC background-mixed datasets in Rucio. The skill queries Rucio for all DIDs with `is_background_mixed=true`, drops the CI/`main` branch entries, groups the remaining real-campaign DIDs by campaign → data name, and rewrites `docs/data.md` using the `<DidTable>` Vue component (one table per data name, with per-row and per-table copy buttons). Trigger phrases: "update data.md", "refresh the data catalog", "regenerate data page", "pull the new datasets from rucio", "what backgrounds are on rucio", "list available DIDs".
+description: Use this skill when the user asks to update, refresh, regenerate, or rebuild `docs/data.md` — the catalog of available ePIC background-mixed datasets in Rucio. The skill queries Rucio for all DIDs with `is_background_mixed=true`, drops the CI/`main` branch entries, groups the remaining real-campaign DIDs by campaign → data name, and helps you hand-author one `<DidStrips>` block per data name (with per-row and per-strip copy buttons and hover-tooltip tags). Trigger phrases: "update data.md", "refresh the data catalog", "regenerate data page", "pull the new datasets from rucio", "what backgrounds are on rucio", "list available DIDs".
 ---
 
 # Update `docs/data.md`
 
 `docs/data.md` is the project's human-readable catalog of background-mixed
 datasets available in Rucio. Its source of truth is the output of
-`rucio did list --filter 'is_background_mixed=true' 'epic:*'`. This skill
-refreshes the page's dataset tables from a fresh query — the surrounding
-prose on the page is hand-edited and left untouched (see step 2).
+`rucio did list --filter 'is_background_mixed=true' 'epic:*'`.
 
-The page uses the **`<DidTable>` Vue component** (registered in
-`docs/.vitepress/theme/index.ts`) so every row has a 📋 copy button and
-every table has a "Copy all" button — much friendlier than a flat bullet
-list when you actually want to paste a DID somewhere.
+**This is a hand-authoring task, not an automated parse.** The page uses the
+**`<DidStrips>` Vue component**, whose tags — the coloured chips with hover
+tooltips — carry meaning (physics process, beam energy, `minQ2`, signal mass,
+…) that *you* assign. The DID path has **no fixed schema**: data names and
+segment layouts change from campaign to campaign, and the same position can
+mean different things in different datasets. There is nothing reliable to
+parse into tags, so don't try. There is also not much data (a handful of
+strips), so authoring by hand is quick.
 
----
+Your job: query Rucio, digest the result with the helper script, then **edit
+`docs/data.md` directly** — add/update one `<DidStrips>` block per
+`(campaign, data_name)`, choosing sensible tag groups, colours, and tooltips.
 
-## One-liner (preferred)
-
-If `docker` and `python` are both available locally:
-
-```bash
-docker run --rm eicweb/eic_xl:nightly \
-    rucio did list --filter 'is_background_mixed=true' 'epic:*' \
-  | python scripts/update_data_md.py
-```
-
-That pipes the raw table straight into the parser, which writes
-`docs/data.md`. Skip to step 4 (commit) below.
-
-The remaining sections explain each step in case the one-liner can't run
-straight through (e.g. you want to inspect the raw Rucio output, or the
-container is launched via Apptainer on the JLab farm).
+> Prior versions of this page used an auto-generated `<DidTable>`. That is
+> retired. Do not emit `<DidTable>`; author `<DidStrips>` (see step 3).
 
 ---
 
@@ -63,122 +53,132 @@ responsibility, not the skill's.
 
 ---
 
-## 2. Run the parser
+## 2. Digest the DIDs with the helper
 
-`scripts/update_data_md.py` reads the Rucio ASCII table from stdin or from
-a file, parses each DID, drops `main/` branch entries, groups by
-campaign → data name, sorts inside each group, and **rewrites only the
-generated parts** of `docs/data.md`.
+`scripts/summarize_rucio_dids.py` is **read-only** — it never writes
+`docs/data.md`. It parses the Rucio table, drops `main/` and non-`FULL`/`RECO`
+and non-`epic_craterlake` entries, groups by `(campaign, data_name)`, and for
+each group prints exactly the material you need to author a strip:
 
-The script is deliberately *not* responsible for the page's prose. It only
-touches two machine-managed spots in the existing `docs/data.md`:
-
-- the `<DidTable>` blocks between the
-  `<!-- BEGIN TABLES ... -->` and `<!-- END TABLES -->` markers, and
-- the `_Last updated: **YYYY-MM-DD**_` line.
-
-Everything else — the intro, conventions, and the entire "Using these
-DIDs" tutorial — is plain hand-editable markdown that you change directly
-in `docs/data.md`. Editing the page's wording does **not** mean touching
-the Python. The script refuses to run (non-zero exit, nothing written) if
-`docs/data.md` is missing or the markers aren't present, so it can never
-clobber the prose.
+- **`didpath`** — the shared DID prefix (with `{FULL|RECO}` when both
+  partitions are present) to paste into the `didpath=` attribute;
+- **`version`** (campaign) and **`name`** (data name);
+- **FULL / RECO** counts;
+- **varying segments by position** — the segments that differ within the
+  group. These are your candidate **tag groups** (`<Tags>`);
+- **constant segments** — the same across every DID. These usually belong in
+  the collapsed **`<More>`** section, not the main row;
+- the full, sorted **DID list** to paste verbatim into `<Dids>`.
 
 ```bash
-python scripts/update_data_md.py /tmp/rucio.txt
-# or:
-cat /tmp/rucio.txt | python scripts/update_data_md.py
+python scripts/summarize_rucio_dids.py /tmp/rucio.txt
+# or:  cat /tmp/rucio.txt | python scripts/summarize_rucio_dids.py
+# add --json for a machine-readable version of the same grouping
 ```
 
-Output (example):
-
-```
-Parsed 35 valid DIDs (skipped 21 `main/` entries)
-Rendered 3 campaign(s), 3 data-name table(s)
-Wrote /home/you/dev/ai-epic-background/docs/data.md
-```
-
-The script's parsing rules are baked into the code, but they match these
-project conventions:
-
-| Field      | Definition                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------- |
-| partition  | `RECO` (EICrecon output) or `FULL` (DD4hep simulation output). Anything else is dropped.    |
-| campaign   | The segment after the partition. `main` is treated as a CI branch and dropped.              |
-| data_name  | The segment after `epic_craterlake/`.                                                       |
-| beam_energy| First substring matching `\d+x\d+` in the remaining path (e.g. `10x100`, `18x275`).         |
-
-Sort order inside one `(campaign, data_name)` table:
-
-1. Beam energy, by `(lepton, hadron)` numerically.
-2. `minQ2=N` ascending (DIDs without a `minQ2` go to the end).
-3. **FULL above RECO** at the same `(energy, minQ2)`.
-
-Campaigns are rendered newest-first (lexicographic descending on the
-version tag, so `26.04.1` is above `26.03.0`).
+Read this output; it tells you what varies (→ tag groups) and what is fixed
+(→ `<More>`). You still decide the labels, colours, and tooltips.
 
 ---
 
-## 3. What the output looks like
+## 3. Author `<DidStrips>` blocks in `docs/data.md`
 
-The generated block (between the markers) has standard `## Campaign X` and
-`### <data_name>` headings (so the sidebar/TOC pick them up), and one
-`<DidTable>` Vue component per data name:
+Edit `docs/data.md` by hand. The generated strips live between the
+`<!-- BEGIN STRIPS -->` and `<!-- END STRIPS -->` markers (Rucio campaigns);
+the JLab-xrootd `25.10` strips and all surrounding prose (intro, conventions,
+"Using these DIDs") are hand-edited and stay as they are unless the data
+changed. Add a `## Campaign <version>` heading per campaign (newest first) and
+one `<DidStrips>` per `(campaign, data_name)`.
 
-```markdown
-# Data
+### Anatomy of a strip
 
-... hand-written intro + conventions ...
-
-<!-- BEGIN TABLES (generated by scripts/update_data_md.py — do not edit by hand) -->
-
+```md
 ## Campaign 26.04.1
 
-### Bkg_Exact1S_2us
-
-<DidTable :rows='[{"did":"epic:/FULL/26.04.1/.../10x100/minQ2=1","kind":"FULL","energy":"10x100"},{"did":"epic:/RECO/26.04.1/.../10x100/minQ2=1","kind":"RECO","energy":"10x100"}, ...]' />
-
-<!-- END TABLES -->
-
-## Using these DIDs
-... hand-written tutorial ...
+<DidStrips
+  didpath="epic:/{FULL|RECO}/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/"
+  version="26.04.1"
+  name="Bkg_Exact1S_2us"
+>
+  <Tags color="violet" desc="Physics process">
+    <Tag desc="Deep Inelastic Scattering">DIS</Tag>
+    <Tag desc="Neutral-current exchange">NC</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy">
+    <Tag desc="Beam energy 10x100 GeV (e 10 x p 100)">10x100</Tag>
+    <Tag desc="Beam energy 10x275 GeV (e 10 x p 275)">10x275</Tag>
+  </Tags>
+  <Tags color="amber" desc="Minimum momentum transfer">
+    <Tag desc="Minimum Q2 >= 1 GeV2">minQ2=1</Tag>
+    <Tag desc="Minimum Q2 >= 1000 GeV2">minQ2=1000</Tag>
+  </Tags>
+  <More color="slate">
+    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Beam-pipe gold coating">GoldCt</Tag>
+    <Tag desc="Coating thickness 10 um">10um</Tag>
+  </More>
+  <Dids>
+epic:/FULL/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+  </Dids>
+</DidStrips>
 ```
 
-Each row in the prop is `{did, kind, energy}`. The component renders:
+### Prop / child reference
 
-- a 📋 per-row copy button (copies that single DID),
-- a coloured kind badge (FULL = indigo, RECO = green),
-- the beam-energy column (omitted automatically if all rows lack it),
-- the full DID in `<code>`,
-- a top-of-table toolbar with **Copy all (N)** plus, when both kinds are
-  present, **FULL only** and **RECO only** buttons that copy just the
-  filtered subset.
+- **`<DidStrips didpath version name open>`** — `didpath` is shown verbatim
+  as the copyable prefix line (use the helper's `didpath`; `{FULL|RECO}` is
+  just display text, not interpreted). `version` → dark campaign pill, `name`
+  → teal dataset chip. `open` starts the strip expanded.
+- **`<Tags color="..." desc="...">`** — a colour group on the main row.
+  `color` applies to every child chip; `desc` is the group's default tooltip.
+- **`<More color="...">`** — same, but renders under *Additional info* when the
+  strip is expanded. Put constant/context segments here.
+- **`<Tag desc="..." color="...">label</Tag>`** — one chip. Element text is the
+  label; `desc` sets the hover tooltip (falls back to the group's `desc`);
+  `color`/`bg` overrides the group colour for a single chip.
+- **`<Dids>`** — one full DID per line, pasted verbatim. Rendered as the
+  expandable table with a per-row 📋 and *Copy all*. The `FULL·n` / `RECO·n`
+  counts come from a substring check of `/FULL/` and `/RECO/` in these lines.
 
-All copy buttons fall back from `navigator.clipboard.writeText` to a
-`document.execCommand("copy")` shim, so they work in non-secure contexts
-too.
+**Colours** — named: `violet sky amber slate green indigo teal rose fuchsia
+gray blue red orange`, or any CSS colour / `#hex`. Chip bg/border derive from
+the hue and adapt to light/dark automatically. Reuse a consistent colour per
+concept across strips (e.g. `violet` = physics process, `sky` = beam energy,
+`amber` = `minQ2`) so the page reads coherently.
+
+### Authoring guidance
+
+- One `<DidStrips>` per `(campaign, data_name)`; group `## Campaign` headings
+  newest-first so the sidebar/TOC order matches.
+- Map each **varying-segment position** from the helper to a `<Tags>` group.
+  You don't have to surface every distinct value — pick the ones a user would
+  filter on. Constant segments → `<More>`.
+- Write real tooltips (`desc`): expand acronyms, give units. This is the whole
+  point of the redesign over a flat table.
+- Paste the DID list into `<Dids>` **verbatim and complete** — the strip's copy
+  buttons and FULL/RECO counts come straight from those lines, so this is the
+  authoritative list even though only a few tags are surfaced.
+- Update the `_Last updated: **YYYY-MM-DD**_` line near the top.
 
 ---
 
 ## 4. Wire `data.md` into the docs
 
-Already done in `docs/.vitepress/config.mts`:
+Already done in `docs/.vitepress/config.mts` (top nav `Data` → `/data`;
+sidebar `Data` → `Available Datasets`). If those entries went missing after a
+config rewrite, add them back.
 
-- top nav has `{ text: 'Data', link: '/data' }`,
-- sidebar has a `'Data' → 'Available Datasets' → /data` group.
-
-If those entries are missing (e.g. after a config rewrite), add them back.
+`<DidStrips>` and its child markers `Tags` / `Tag` / `More` / `Dids` are
+globally registered in `docs/.vitepress/theme/index.ts`, so no per-page
+imports are needed.
 
 ---
 
 ## 5. Commit
 
-`docs/data.md` is the only artefact to commit. Do **not** commit:
-
-- the raw Rucio output (`/tmp/rucio.txt` etc.),
-- any temp parser scripts (`scripts/update_data_md.py` is the permanent one).
-
-Typical commit message:
+`docs/data.md` is the only artefact to commit. Do **not** commit the raw
+Rucio output (`/tmp/rucio.txt`). Typical message:
 
 ```
 docs: refresh data.md from rucio (N DIDs across M campaigns)
@@ -188,31 +188,29 @@ docs: refresh data.md from rucio (N DIDs across M campaigns)
 
 ## 6. Verify
 
-Quick sanity checks before finishing:
+- `cd docs && npm run build` succeeds with no "page not found" and no Vue
+  warnings about unknown components (`DidStrips`/`Tags`/`Tag`/`More`/`Dids`).
+- Every `## Campaign` heading is a version tag (e.g. `26.04.1`), never `main`.
+- Each strip's `<Dids>` list is complete; FULL has its RECO twin where Rucio
+  has one.
+- Spot-check a strip in `npm run dev`: chips show tooltips on hover, *Copy all*
+  and per-row 📋 work, the prefix line copies.
 
-- Every `## Campaign` heading is a version tag (e.g. `26.04.1`), never
-  `main`.
-- Every FULL has its RECO twin in the same `(energy, minQ2)` row pair where
-  one exists in Rucio.
-- The page builds: `cd docs && npm run build` succeeds without "page not
-  found" or component warnings about `DidTable`.
-
-Then report to the user: number of campaigns, number of DIDs rendered, the
-path written (`docs/data.md`), and how many `main/` entries were skipped.
+Then report to the user: number of campaigns, number of DIDs, the path written
+(`docs/data.md`), and how many `main/` entries were skipped.
 
 ---
 
 ## Notes
 
-- The Rucio output table widens to fit the longest DID; the parser uses
-  `split("|", 2)[1]` and only looks at the first column, so column widths
-  don't matter.
+- The Rucio output table widens to fit the longest DID; the helper uses
+  `split("|", 2)[1]` and only reads the first column, so column widths don't
+  matter.
 - Some DIDs have unusual tails (e.g. SIDIS:
-  `.../SIDIS/D0_ABCONV/pythia8.306-1.1/10x100/q2_100/hiDiv`). The parser
-  still finds `10x100` via the regex and emits them with that beam-energy
-  tag; they sort to the end of the `minQ2=...` block (since they have no
-  `minQ2`).
-- The component lives at
-  `docs/.vitepress/theme/components/DidTable.vue` and is globally
-  registered in `theme/index.ts` — using `<DidTable>` from any markdown
-  page works without per-page imports.
+  `.../SIDIS/D0_ABCONV/pythia8.306-1.1/10x100/q2_100/hiDiv`). Their extra
+  segments show up as their own varying positions in the helper output —
+  decide per case whether each becomes a tag or goes in `<More>`.
+- The component lives at `docs/.vitepress/theme/components/DidStrips.vue`;
+  its header comment and
+  `docs/.vitepress/theme/components/DidStrips.README.md` document it in more
+  depth.
