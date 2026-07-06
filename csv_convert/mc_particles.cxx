@@ -5,10 +5,10 @@ R__LOAD_LIBRARY(libedm4hepDict)
 R__LOAD_LIBRARY(libedm4eicDict)
 #endif
 
-// trk_particles_to_csv.cxx
+// mc_particles.cxx
 //
 // Dumps every MCParticle of every event to a CSV, one row per particle.
-// Companion of trk_hits_to_csv.cxx (which dumps reconstructed tracker hits with
+// Companion of trk_hits.cxx (which dumps reconstructed tracker hits with
 // their originating particle). Here we keep the full MC truth particle list so
 // downstream analyses can study kinematics, vertices and the generator/simulator
 // status codes (e.g. to verify the merger status-offset convention, see
@@ -258,11 +258,11 @@ void execute(const std::string& infile, const std::string& outfile, int events) 
 
 // ---------------------------------------------------------------------------
 // ROOT-macro entry point.
-// Call it from the prompt:  root -x -l -b -q 'trk_particles_to_csv.cxx("file.root", "particles.csv", 100)'
+// Call it from the prompt:  root -x -l -b -q 'mc_particles.cxx("file.root", "particles.csv", 100)'
 // ---------------------------------------------------------------------------
-void trk_particles_to_csv(const char* infile, const char* outfile, int events = -1)
+void mc_particles(const char* infile, const char* outfile, int events = -1)
 {
-    fmt::print("'trk_particles_to_csv' entry point is used.\n");
+    fmt::print("'mc_particles' entry point is used.\n");
     execute(infile, outfile, events);
 }
 

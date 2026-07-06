@@ -22,9 +22,9 @@ find_package(nlohmann_json)
 # -----------------------------------------------------------------------------#
 #  Build executable                                                            #
 # -----------------------------------------------------------------------------#
-add_executable(trk_hits_to_csv trk_hits_to_csv.cxx)
+add_executable(trk_hits trk_hits.cxx)
 
-target_link_libraries(trk_hits_to_csv
+target_link_libraries(trk_hits
         PRIVATE
         ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist ROOT::Gpad
         podio::podio podio::podioRootIO podio::podioDict
@@ -32,9 +32,19 @@ target_link_libraries(trk_hits_to_csv
         EDM4EIC::edm4eic EDM4EIC::edm4eicDict
         fmt::fmt)
 
-add_executable(trk_particles_to_csv trk_particles_to_csv.cxx)
+add_executable(mc_particles mc_particles.cxx)
 
-target_link_libraries(trk_particles_to_csv
+target_link_libraries(mc_particles
+        PRIVATE
+        ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist ROOT::Gpad
+        podio::podio podio::podioRootIO podio::podioDict
+        EDM4HEP::edm4hep EDM4HEP::edm4hepDict
+        EDM4EIC::edm4eic EDM4EIC::edm4eicDict
+        fmt::fmt)
+
+add_executable(reco_particles reco_particles.cxx)
+
+target_link_libraries(reco_particles
         PRIVATE
         ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist ROOT::Gpad
         podio::podio podio::podioRootIO podio::podioDict

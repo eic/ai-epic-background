@@ -52,8 +52,9 @@ def create_container_script_template():
       fi
     }}
 
-    convert "trk_hits" "trk_hits_to_csv.cxx" "{trk_hits_to_scv}"
-    convert "mc_particles" "mc_particles_to_csv.cxx" "{mc_particles_to_scv}"
+    convert "trk_hits" "trk_hits.cxx" "{trk_hits_csv}"
+    convert "mc_particles" "mc_particles.cxx" "{mc_particles_csv}"
+    convert "reco_particles" "reco_particles.cxx" "{reco_particles_csv}"
 
     echo "==========================================================================="
     echo "Done. Outputs in: {input_dir}"
@@ -84,10 +85,12 @@ def csv_file_id(input_file):
 
 def make_custom_params_updater(config_path):
     """Create a custom params updater with access to the config path."""
+    # Load once: the updater runs per input file, and re-parsing the config
+    # YAML thousands of times is a real cost.
+    config = load_config(config_path)
+
     def custom_params_updater(params: Dict) -> Dict:
         """Add custom parameters for CSV conversion."""
-        config = load_config(config_path)
-
         input_file = params['input_file']
         input_dir = os.path.dirname(input_file)
         output_dir = params['output_dir']
@@ -95,11 +98,9 @@ def make_custom_params_updater(config_path):
 
         params['csv_convert_dir'] = config.get('csv_convert_dir', csv_convert_dir_default)
         params['input_dir'] = input_dir
-        params['trk_hits_to_scv'] = os.path.join(output_dir, f"{file_id}.trk_hits.csv")
-        params['mc_particles_to_scv'] = os.path.join(output_dir, f"{file_id}.mc_particles.csv")
-        # params['csv_reco_dis'] = os.path.join(output_dir, f"{csv_basename}.reco_dis.csv")
-        # params['csv_mcpart_lambda'] = os.path.join(output_dir, f"{csv_basename}.mcpart_lambda.csv")
-        # params['csv_reco_ff_lambda'] = os.path.join(output_dir, f"{csv_basename}.reco_ff_lambda.csv")
+        params['trk_hits_csv'] = os.path.join(output_dir, f"{file_id}.trk_hits.csv")
+        params['mc_particles_csv'] = os.path.join(output_dir, f"{file_id}.mc_particles.csv")
+        params['reco_particles_csv'] = os.path.join(output_dir, f"{file_id}.reco_particles.csv")
 
         return params
     return custom_params_updater

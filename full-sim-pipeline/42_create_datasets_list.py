@@ -16,7 +16,7 @@ What it does
    -> the list of root:// PFNs that make up the dataset.
 3. Writes `<datasets_dir>/<slug>.yaml`:
 
-       did: epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/.../minQ2=1
+       dataset: epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/.../minQ2=1
        slug: Bkg_Exact1S_2us_DIS_NC_10x100_minQ2=1
        energy: 10x100
        n_files: 123
@@ -338,7 +338,10 @@ def main():
         with open(out_path, "w") as f:
             yaml.safe_dump(
                 {
-                    "did": did,
+                    # "dataset" is the dataset identity: a rucio DID here; for
+                    # non-rucio cards (e.g. meson-structure) it may be an
+                    # xrootd URL or an absolute directory path instead.
+                    "dataset": did,
                     "slug": slug,
                     "metadata": meta,
                     "rucio_metadata": rucio_meta,

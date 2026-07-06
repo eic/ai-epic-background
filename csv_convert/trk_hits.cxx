@@ -679,11 +679,11 @@ void execute(const std::string& infile, const std::string& outfile, int events) 
 
 // ---------------------------------------------------------------------------
 // ROOT-macro entry point.
-// Call it from the prompt:  root -x -l -b -q 'trk_hits_to_csv.cxx("file.root", "output.csv", 100)'
+// Call it from the prompt:  root -x -l -b -q 'trk_hits.cxx("file.root", "output.csv", 100)'
 // ---------------------------------------------------------------------------
-void trk_hits_to_csv(const char* infile, const char* outfile, int events = -1)
+void trk_hits(const char* infile, const char* outfile, int events = -1)
 {
-    fmt::print("'trk_hits_to_csv' entry point is used.\n");
+    fmt::print("'trk_hits' entry point is used.\n");
     execute(infile, outfile, events);
 }
 

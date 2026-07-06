@@ -232,13 +232,13 @@ int main(int argc, char* argv[]) {
 // ---------------------------------------------------------------------------
 // ROOT-macro entry point.
 // Call it from the prompt:
-//   root -x -l -b -q 'csv_reco_particles.cxx("file.root", "output.csv", 100)'
+//   root -x -l -b -q 'reco_particles.cxx("file.root", "output.csv", 100)'
 // ---------------------------------------------------------------------------
-void csv_reco_particles(const char* infile,
-                        const char* outfile = "reco_particles.csv",
-                        int events = -1,
-                        const char* collection = "ReconstructedParticles") {
-    fmt::print("'csv_reco_particles' entry point is used. Arguments:\n");
+void reco_particles(const char* infile,
+                    const char* outfile = "reco_particles.csv",
+                    int events = -1,
+                    const char* collection = "ReconstructedParticles") {
+    fmt::print("'reco_particles' entry point is used. Arguments:\n");
     fmt::print("  infile:     {}\n", infile);
     fmt::print("  outfile:    {}\n", outfile);
     fmt::print("  events:     {} {}\n", events, (events == -1 ? "(process all)" : ""));

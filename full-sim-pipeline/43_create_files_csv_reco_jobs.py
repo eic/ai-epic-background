@@ -74,10 +74,11 @@ def create_container_script_template():
 
 def make_custom_params_updater(config_path):
     """Create a custom params updater with access to the config path."""
+    # Load once: the updater runs per input file.
+    config = load_config(config_path)
+
     def custom_params_updater(params: Dict) -> Dict:
         """Add custom parameters for CSV conversion."""
-        config = load_config(config_path)
-
         input_file = params['input_file']
         input_dir = os.path.dirname(input_file)
         output_dir = params['output_dir']
