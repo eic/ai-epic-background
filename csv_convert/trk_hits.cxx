@@ -26,8 +26,10 @@ R__LOAD_LIBRARY(libedm4eicDict)
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <set>
 #include <optional>
 
 using namespace edm4hep;
@@ -150,7 +152,7 @@ const std::map<std::string, std::string> tracker_names_by_assoc = {
     {"ForwardRomanPotRawHitAssociations", "ForwardRomanPotRecHits"},
     {"MPGDBarrelRawHitAssociations", "MPGDBarrelRecHits"},
     {"OuterMPGDBarrelRawHitAssociations", "OuterMPGDBarrelRecHits"},
-    {"RICHEndcapNRawHitsAssociations", "RICHEndcapNRits"},
+    {"RICHEndcapNRawHitsAssociations", "RICHEndcapNRecHits"},
     {"SiBarrelRawHitAssociations", "SiBarrelTrackerRecHits"},
     {"SiBarrelVertexRawHitAssociations", "SiBarrelVertexRecHits"},
     {"SiEndcapTrackerRawHitAssociations", "SiEndcapTrackerRecHits"},
@@ -360,6 +362,23 @@ std::tuple<uint64_t, std::string> get_detector_info(uint64_t cell_id) {
 }
 
 
+/// Returns the collection cast to T, or nullptr if it is absent in this frame
+/// or stored with a different type. Collection sets differ between eic_xl /
+/// eicrecon versions, so absence is expected and must not be fatal.
+template <typename T>
+const T* get_optional_collection(const podio::Frame& event, const std::string& name) {
+    const podio::CollectionBase* coll = event.get(name);
+    return coll ? dynamic_cast<const T*>(coll) : nullptr;
+}
+
+/// Prints a skip notice, once per collection name, so per-event skips don't flood the log
+void note_skipped(const std::string& name, const std::string& why) {
+    static std::set<std::string> already_noted;
+    if (already_noted.insert(name).second) {
+        fmt::print("[skip] {}: {} (expected for some eic_xl versions)\n", name, why);
+    }
+}
+
 /// Utility function, finds tracker_hit by raw_hit
 /// Returns optional with TrackerHit on success, or nullopt with error message via out parameter
 std::optional<edm4eic::TrackerHit> get_tracker_hit(
@@ -439,11 +458,21 @@ int32_t get_origin_status(const MCParticle& particle) {
 // Specialized function for Tracker Hits
 void process_tracker_hits(const podio::Frame& event, const std::string& assoc_col_name, int evt_id) {
 
-    const auto& hit_assocs = event.get<edm4eic::MCRecoTrackerHitAssociationCollection>(assoc_col_name);
+    const auto* hit_assocs_ptr = get_optional_collection<edm4eic::MCRecoTrackerHitAssociationCollection>(event, assoc_col_name);
+    if (!hit_assocs_ptr) {
+        note_skipped(assoc_col_name, "association collection not in file");
+        return;
+    }
+    const auto& hit_assocs = *hit_assocs_ptr;
 
     // We get corresponding tracker hits collection before hits iteration. We will need it there.
     const auto& traker_col_name = tracker_names_by_assoc.at(assoc_col_name);
-    const auto& tracker_hits = event.get<edm4eic::TrackerHitCollection>(traker_col_name);
+    const auto* tracker_hits_ptr = get_optional_collection<edm4eic::TrackerHitCollection>(event, traker_col_name);
+    if (!tracker_hits_ptr) {
+        note_skipped(traker_col_name, "rec-hits collection not in file");
+        return;
+    }
+    const auto& tracker_hits = *tracker_hits_ptr;
 
     // Write header if needed
     if (!trk_hits_header_written) {
@@ -556,7 +585,12 @@ void process_tracker_hits(const podio::Frame& event, const std::string& assoc_co
 // Specialized function for Calorimeter Hits
 void process_calo_hits(const podio::Frame& event, const std::string& collection_name, int evt_id) {
 
-    const auto& hit_assocs = event.get<edm4eic::MCRecoCalorimeterHitAssociationCollection>(collection_name);
+    const auto* hit_assocs_ptr = get_optional_collection<edm4eic::MCRecoCalorimeterHitAssociationCollection>(event, collection_name);
+    if (!hit_assocs_ptr) {
+        note_skipped(collection_name, "association collection not in file");
+        return;
+    }
+    const auto& hit_assocs = *hit_assocs_ptr;
 
     for (const auto& hit_assoc : hit_assocs) {
         //hit_assoc.getSimHit().getContributions()
@@ -637,25 +671,34 @@ void process_event(const podio::Frame& event, int evt_id) {
 //------------------------------------------------------------------------------
 // file loop
 //------------------------------------------------------------------------------
-void process_file(const std::string& file_name) {
+bool process_file(const std::string& file_name) {
     podio::ROOTReader reader;
     try {
         reader.openFile(file_name);
     }
-    catch (const std::runtime_error&e) {
+    catch (const std::exception& e) {
         fmt::print(stderr, "Error opening file {}: {}\n", file_name, e.what());
-        return;
+        fmt::print(stderr, "(a file written by a newer eic_xl cannot be read by older software)\n");
+        return false;
     }
 
-    const auto event_count = reader.getEntries(podio::Category::Event);
+    try {
+        const auto event_count = reader.getEntries(podio::Category::Event);
 
-    for (unsigned ie = 0; ie < event_count; ++ie) {
-        if (events_limit > 0 && total_evt_processed >= events_limit) return;
+        for (unsigned ie = 0; ie < event_count; ++ie) {
+            if (events_limit > 0 && total_evt_processed >= events_limit) return true;
 
-        podio::Frame evt(reader.readNextEntry(podio::Category::Event));
-        process_event(evt, total_evt_processed);
-        ++total_evt_processed;
+            podio::Frame evt(reader.readNextEntry(podio::Category::Event));
+            process_event(evt, total_evt_processed);
+            ++total_evt_processed;
+        }
     }
+    catch (const std::exception& e) {
+        fmt::print(stderr, "Error reading file {}: {}\n", file_name, e.what());
+        fmt::print(stderr, "(possible causes: file from a newer eic_xl than this software, or unexpected data)\n");
+        return false;
+    }
+    return true;
 }
 
 
@@ -668,9 +711,16 @@ void execute(const std::string& infile, const std::string& outfile, int events) 
     }
 
     events_limit = events;
-    process_file(infile);
+    const bool ok = process_file(infile);
 
     csv.close();
+
+    // Remove the incomplete output so job reruns don't see it and skip the file
+    if (!ok) {
+        std::remove(outfile.c_str());
+        fmt::print(stderr, "Failed processing {}. Removed incomplete output {}\n", infile, outfile);
+        exit(2);
+    }
 
     fmt::print("\nWrote data for {} tracks to {}\n", total_evt_processed, outfile);
 

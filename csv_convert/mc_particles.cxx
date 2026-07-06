@@ -23,8 +23,10 @@ R__LOAD_LIBRARY(libedm4eicDict)
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
 #include <cstdint>
+#include <set>
 
 using namespace edm4hep;
 
@@ -39,6 +41,23 @@ bool header_written = false;
 
 // Name of the MC truth particle collection in the (reco/sim) podio frame.
 const std::string mc_particles_col_name = "MCParticles";
+
+/// Returns the collection cast to T, or nullptr if it is absent in this frame
+/// or stored with a different type. Collection sets differ between eic_xl /
+/// eicrecon versions, so absence is expected and must not be fatal.
+template <typename T>
+const T* get_optional_collection(const podio::Frame& event, const std::string& name) {
+    const podio::CollectionBase* coll = event.get(name);
+    return coll ? dynamic_cast<const T*>(coll) : nullptr;
+}
+
+/// Prints a skip notice, once per collection name, so per-event skips don't flood the log
+void note_skipped(const std::string& name, const std::string& why) {
+    static std::set<std::string> already_noted;
+    if (already_noted.insert(name).second) {
+        fmt::print("[skip] {}: {} (expected for some eic_xl versions)\n", name, why);
+    }
+}
 
 
 /// Classifies a *generator-level* (non-zero) generatorStatus value into the
@@ -167,7 +186,12 @@ void process_event(const podio::Frame& event, int evt_id) {
 
     fmt::print("Process event #{}\n", evt_id);
 
-    const auto& particles = event.get<MCParticleCollection>(mc_particles_col_name);
+    const auto* particles_ptr = get_optional_collection<MCParticleCollection>(event, mc_particles_col_name);
+    if (!particles_ptr) {
+        note_skipped(mc_particles_col_name, "collection not in file");
+        return;
+    }
+    const auto& particles = *particles_ptr;
 
     // Write header if needed
     if (!header_written) {
@@ -216,25 +240,34 @@ void process_event(const podio::Frame& event, int evt_id) {
 //------------------------------------------------------------------------------
 // file loop
 //------------------------------------------------------------------------------
-void process_file(const std::string& file_name) {
+bool process_file(const std::string& file_name) {
     podio::ROOTReader reader;
     try {
         reader.openFile(file_name);
     }
-    catch (const std::runtime_error& e) {
+    catch (const std::exception& e) {
         fmt::print(stderr, "Error opening file {}: {}\n", file_name, e.what());
-        return;
+        fmt::print(stderr, "(a file written by a newer eic_xl cannot be read by older software)\n");
+        return false;
     }
 
-    const auto event_count = reader.getEntries(podio::Category::Event);
+    try {
+        const auto event_count = reader.getEntries(podio::Category::Event);
 
-    for (unsigned ie = 0; ie < event_count; ++ie) {
-        if (events_limit > 0 && total_evt_processed >= events_limit) return;
+        for (unsigned ie = 0; ie < event_count; ++ie) {
+            if (events_limit > 0 && total_evt_processed >= events_limit) return true;
 
-        podio::Frame evt(reader.readNextEntry(podio::Category::Event));
-        process_event(evt, total_evt_processed);
-        ++total_evt_processed;
+            podio::Frame evt(reader.readNextEntry(podio::Category::Event));
+            process_event(evt, total_evt_processed);
+            ++total_evt_processed;
+        }
     }
+    catch (const std::exception& e) {
+        fmt::print(stderr, "Error reading file {}: {}\n", file_name, e.what());
+        fmt::print(stderr, "(possible causes: file from a newer eic_xl than this software, or unexpected data)\n");
+        return false;
+    }
+    return true;
 }
 
 
@@ -247,9 +280,16 @@ void execute(const std::string& infile, const std::string& outfile, int events) 
     }
 
     events_limit = events;
-    process_file(infile);
+    const bool ok = process_file(infile);
 
     csv.close();
+
+    // Remove the incomplete output so job reruns don't see it and skip the file
+    if (!ok) {
+        std::remove(outfile.c_str());
+        fmt::print(stderr, "Failed processing {}. Removed incomplete output {}\n", infile, outfile);
+        exit(2);
+    }
 
     fmt::print("\nWrote {} particles from {} events to {}\n",
                total_prt_written, total_evt_processed, outfile);

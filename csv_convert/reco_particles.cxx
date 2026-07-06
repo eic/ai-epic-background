@@ -15,7 +15,9 @@ R__LOAD_LIBRARY(libedm4eicDict)
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstdio>
 #include <cstdlib>
+#include <set>
 
 using namespace edm4eic;
 
@@ -30,6 +32,23 @@ bool header_written = false;
 
 // The collection holding the final reconstructed particles. Overridable with -c.
 std::string collection_name = "ReconstructedParticles";
+
+/// Returns the collection cast to T, or nullptr if it is absent in this frame
+/// or stored with a different type. Collection sets differ between eic_xl /
+/// eicrecon versions, so absence is expected and must not be fatal.
+template <typename T>
+const T* get_optional_collection(const podio::Frame& event, const std::string& name) {
+    const podio::CollectionBase* coll = event.get(name);
+    return coll ? dynamic_cast<const T*>(coll) : nullptr;
+}
+
+/// Prints a skip notice, once per collection name, so per-event skips don't flood the log
+void note_skipped(const std::string& name, const std::string& why) {
+    static std::set<std::string> already_noted;
+    if (already_noted.insert(name).second) {
+        fmt::print("[skip] {}: {} (expected for some eic_xl versions)\n", name, why);
+    }
+}
 
 /**
  * @brief Counts the calorimeter hits attached to a particle through its clusters.
@@ -136,7 +155,12 @@ std::string make_header() {
 //------------------------------------------------------------------------------
 void process_event(const podio::Frame& event, int evt_id) {
 
-    const auto& parts = event.get<ReconstructedParticleCollection>(collection_name);
+    const auto* parts_ptr = get_optional_collection<ReconstructedParticleCollection>(event, collection_name);
+    if (!parts_ptr) {
+        note_skipped(collection_name, "collection not in file");
+        return;
+    }
+    const auto& parts = *parts_ptr;
 
     if (!header_written) {
         csv << make_header() << '\n';
@@ -152,26 +176,35 @@ void process_event(const podio::Frame& event, int evt_id) {
 //------------------------------------------------------------------------------
 // file loop
 //------------------------------------------------------------------------------
-void process_file(const std::string& fname) {
+bool process_file(const std::string& fname) {
     podio::ROOTReader rdr;
     try {
         rdr.openFile(fname);
     }
-    catch (const std::runtime_error& e) {
+    catch (const std::exception& e) {
         fmt::print(stderr, "Error opening file {}: {}\n", fname, e.what());
-        return;
+        fmt::print(stderr, "(a file written by a newer eic_xl cannot be read by older software)\n");
+        return false;
     }
 
-    const auto nEv = rdr.getEntries(podio::Category::Event);
-    fmt::print("Processing {} events from {}\n", nEv, fname);
+    try {
+        const auto nEv = rdr.getEntries(podio::Category::Event);
+        fmt::print("Processing {} events from {}\n", nEv, fname);
 
-    for (unsigned ie = 0; ie < nEv; ++ie) {
-        if (events_limit > 0 && total_evt_seen >= events_limit) return;
+        for (unsigned ie = 0; ie < nEv; ++ie) {
+            if (events_limit > 0 && total_evt_seen >= events_limit) return true;
 
-        podio::Frame evt(rdr.readNextEntry(podio::Category::Event));
-        process_event(evt, total_evt_seen);
-        ++total_evt_seen;
+            podio::Frame evt(rdr.readNextEntry(podio::Category::Event));
+            process_event(evt, total_evt_seen);
+            ++total_evt_seen;
+        }
     }
+    catch (const std::exception& e) {
+        fmt::print(stderr, "Error reading file {}: {}\n", fname, e.what());
+        fmt::print(stderr, "(possible causes: file from a newer eic_xl than this software, or unexpected data)\n");
+        return false;
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -218,7 +251,13 @@ int main(int argc, char* argv[]) {
 
     for (auto& f : infiles) {
         fmt::print("\n=== Processing file: {} ===\n", f);
-        process_file(f);
+        if (!process_file(f)) {
+            csv.close();
+            // Remove the incomplete output so job reruns don't see it and skip the file
+            std::remove(out_name.c_str());
+            fmt::print(stderr, "Failed processing {}. Removed incomplete output {}\n", f, out_name);
+            return 2;
+        }
         if (events_limit > 0 && total_evt_seen >= events_limit) break;
     }
 
@@ -256,9 +295,17 @@ void reco_particles(const char* infile,
     header_written = false;
     collection_name = collection;
 
-    process_file(infile);
+    const bool ok = process_file(infile);
 
     csv.close();
+
+    // Remove the incomplete output so job reruns don't see it and skip the file
+    if (!ok) {
+        std::remove(outfile);
+        fmt::print(stderr, "Failed processing {}. Removed incomplete output {}\n", infile, outfile);
+        exit(2);
+    }
+
     fmt::print("\nTotal events processed: {}\n", total_evt_seen);
     fmt::print("Total reconstructed particles written: {}\n", total_parts_written);
     fmt::print("Output written to: {}\n", outfile);
