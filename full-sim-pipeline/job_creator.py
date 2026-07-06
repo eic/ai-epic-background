@@ -116,7 +116,7 @@ class JobCreator:
                  slurm_account: str = 'eic',
                  slurm_partition: str = 'production',
                  slurm_array_chunk: int = 10000,  # farm MaxArraySize = 10001
-                 slurm_files_per_job: int = 20,   # files processed per array task
+                 slurm_files_per_job: int = 1,    # files/array task; 1 = one job per file (CSV stages override)
                  ):
         """Initialize JobCreator with configuration."""
         
