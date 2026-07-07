@@ -184,8 +184,6 @@ struct ParticleRecord {
 //------------------------------------------------------------------------------
 void process_event(const podio::Frame& event, int evt_id) {
 
-    fmt::print("Process event #{}\n", evt_id);
-
     const auto* particles_ptr = get_optional_collection<MCParticleCollection>(event, mc_particles_col_name);
     if (!particles_ptr) {
         note_skipped(mc_particles_col_name, "collection not in file");

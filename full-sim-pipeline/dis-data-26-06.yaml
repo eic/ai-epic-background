@@ -29,6 +29,14 @@ energies:
 # Number of events per job
 event_count: 5000
 
+# Files processed sequentially per SLURM array task. Batching short per-file
+# converter jobs into one longer job keeps runtimes above the farm's minimum
+# (the scheduler penalizes floods of <2 min jobs). Each file is still its own
+# singularity+converter invocation, so one bad file only warns and the chunk
+# continues. ~20 files x ~1.5 min ≈ 30 min jobs. Set to 1 for the old
+# one-job-per-file behavior.
+slurm_files_per_job: 20
+
 # DD4Hep jobs
 # afterburner_output is input here
 dd4hep_input:  "${base_dir}/afterburner/${energy}-priority"

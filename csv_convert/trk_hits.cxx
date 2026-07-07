@@ -656,8 +656,6 @@ void process_calo_hits(const podio::Frame& event, const std::string& collection_
 //------------------------------------------------------------------------------
 void process_event(const podio::Frame& event, int evt_id) {
 
-    fmt::print("Process event #{}\n", evt_id);
-
     for (const auto& trk_assoc_name: track_associations) {
         process_tracker_hits(event, trk_assoc_name, evt_id);
     }
