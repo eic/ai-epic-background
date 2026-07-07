@@ -30,6 +30,11 @@ gate a pipeline:
 
   uv run scripts/check_podio_files.py /work/.../*.root && echo "all good"
 
+Pass ``--rm`` to delete every file that is NOT ok (truncated / missing
+metadata / unreadable); existing-but-missing paths are left alone:
+
+  uv run scripts/check_podio_files.py --rm /work/.../*.root
+
 Needs only ``uv`` (no ROOT). The script is also directly executable
 (``./scripts/check_podio_files.py ...``) via the ``uv run`` shebang.
 """
@@ -81,16 +86,27 @@ def main() -> int:
         "-q", "--quiet", action="store_true",
         help="Only print files that are NOT ok.",
     )
+    parser.add_argument(
+        "--rm", action="store_true",
+        help="Delete files that are NOT ok (skips MISSING_FILE, which has nothing to delete).",
+    )
     args = parser.parse_args()
 
     all_ok = True
     for path in args.files:
         ok, msg = check_file(path)
         all_ok = all_ok and ok
+        removed = ""
+        if not ok and args.rm and os.path.exists(path):
+            try:
+                os.remove(path)
+                removed = " [removed]"
+            except OSError as exc:
+                removed = f" [rm failed: {exc}]"
         if ok and args.quiet:
             continue
         flag = "OK  " if ok else "BAD "
-        print(f"{flag} {os.path.basename(path):<55} {msg}")
+        print(f"{flag} {os.path.basename(path):<55} {msg}{removed}")
 
     return 0 if all_ok else 1
 
