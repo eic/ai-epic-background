@@ -34,6 +34,22 @@ def create_container_script_template():
 
     cd "{csv_convert_dir}"
 
+    zip_csv() {{
+      # Compress "$1" -> "$1.zip" (max deflate, level 9), verify the archive,
+      # then delete the original CSV. On any failure: keep the CSV, drop the
+      # partial zip, and return non-zero. Never deletes a CSV whose zip did
+      # not verify.
+      local csv="$1" zip="$1.zip"
+      if python3 -c "import os,sys,zipfile; c,z=sys.argv[1],sys.argv[2]; f=zipfile.ZipFile(z,'w',zipfile.ZIP_DEFLATED,compresslevel=9); f.write(c,os.path.basename(c)); f.close(); v=zipfile.ZipFile(z); sys.exit(1 if v.testzip() is not None or not v.namelist() else 0)" "$csv" "$zip" && [ -s "$zip" ]; then
+        echo "[ZIP] $csv -> $zip (deflate-9, verified); removing CSV"
+        rm -f "$csv"
+      else
+        echo "[ERR] zip failed for $csv; keeping CSV, removing partial zip"
+        rm -f "$zip"
+        return 1
+      fi
+    }}
+
     convert() {{
       local label="$1" macro="$2" out="$3"
 
@@ -45,8 +61,7 @@ def create_container_script_template():
       fi
 
       if [ -f "$out" ] && [ ! -f "$out.zip" ]; then
-        echo "[ZIP] $out -> $out.zip"
-        python3 -m zipfile -c "$out.zip" "$out"
+        zip_csv "$out"
       else
         echo "[SKIP] $label zip exists or CSV missing"
       fi

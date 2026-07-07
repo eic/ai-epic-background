@@ -53,3 +53,5 @@ logs/
 !.claude/skills/
 
 csv_convert/build-docker/
+
+synrad_dis.err

@@ -27,13 +27,29 @@ def create_container_script_template():
 
     cd "{csv_convert_dir}"
 
+    zip_csv() {{
+      # Compress "$1" -> "$1.zip" (max deflate, level 9), verify the archive,
+      # then delete the original CSV. On any failure: keep the CSV, drop the
+      # partial zip, and return non-zero. Never deletes a CSV whose zip did
+      # not verify.
+      local csv="$1" zip="$1.zip"
+      if python3 -c "import os,sys,zipfile; c,z=sys.argv[1],sys.argv[2]; f=zipfile.ZipFile(z,'w',zipfile.ZIP_DEFLATED,compresslevel=9); f.write(c,os.path.basename(c)); f.close(); v=zipfile.ZipFile(z); sys.exit(1 if v.testzip() is not None or not v.namelist() else 0)" "$csv" "$zip" && [ -s "$zip" ]; then
+        echo "[ZIP] $csv -> $zip (deflate-9, verified); removing CSV"
+        rm -f "$csv"
+      else
+        echo "[ERR] zip failed for $csv; keeping CSV, removing partial zip"
+        rm -f "$zip"
+        return 1
+      fi
+    }}
+
     if [ ! -f "{acceptance_ppim_output}.zip" ] || [ ! -f "{acceptance_ppim_pimin_hits_output}.zip" ] || [ ! -f "{acceptance_ppim_prot_hits_output}.zip" ]; then
         echo "[RUN] ccsv_edm4hep_acceptance_ppim for {input_file}"
         root -x -l -b -q csv_edm4hep_acceptance_ppim.cxx'("{input_file}","{acceptance_ppim_output}")'
         echo "[ZIP] zipping files"
-        python3 -m zipfile -c "{acceptance_ppim_output}.zip" "{acceptance_ppim_output}"
-        python3 -m zipfile -c "{acceptance_ppim_pimin_hits_output}.zip" "{acceptance_ppim_pimin_hits_output}"
-        python3 -m zipfile -c "{acceptance_ppim_prot_hits_output}.zip" "{acceptance_ppim_prot_hits_output}"
+        zip_csv "{acceptance_ppim_output}"
+        zip_csv "{acceptance_ppim_pimin_hits_output}"
+        zip_csv "{acceptance_ppim_prot_hits_output}"
     else
         echo "[SKIP] zipped files exists for {input_file}"
     fi
@@ -44,7 +60,7 @@ def create_container_script_template():
         echo "[RUN] csv_edm4hep_acceptance_npi0 for {input_file}"
         root -x -l -b -q csv_edm4hep_acceptance_npi0.cxx'("{input_file}","{acceptance_npi0_output}")'
         echo "[ZIP] zipping files"
-        python3 -m zipfile -c "{acceptance_npi0_output}.zip" "{acceptance_npi0_output}"
+        zip_csv "{acceptance_npi0_output}"
     else
         echo "[SKIP] zipped files exists for {input_file}"
     fi
@@ -55,7 +71,7 @@ def create_container_script_template():
         echo "[RUN] csv_edm4hep_combinatorics_ppim for {input_file}"
         root -x -l -b -q csv_edm4hep_combinatorics_ppim.cxx'("{input_file}","{combinatorics_ppim_output}")'
         echo "[ZIP] zipping files"
-        python3 -m zipfile -c "{combinatorics_ppim_output}.zip" "{combinatorics_ppim_output}"
+        zip_csv "{combinatorics_ppim_output}"
     else
         echo "[SKIP] zipped files exists for {input_file}"
     fi

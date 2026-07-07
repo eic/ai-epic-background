@@ -164,6 +164,61 @@ epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
 
 <!-- END STRIPS -->
 
+## Converted CSV strips (on the JLab farm)
+
+The strips above are the **input** RECO datasets. The full-sim pipeline
+(`full-sim-pipeline/40..43_*csv*jobs.py`) converts those `.edm4eic.root` files
+into flat **CSV tables** (tracker hits, MC particles, reco particles, DIS/Λ
+analysis rows). Each CSV is stored **zipped** (`*.csv.zip`, deflate-9) and
+`pandas.read_csv(..., compression='zip')` reads it directly.
+
+**Where they live.** On the JLab farm **work disk**, one directory per campaign:
+
+```
+/work/eic/users/romanov/epic-background-*/
+```
+
+Verified layout (each leaf dir holds the per-file `*.csv.zip` outputs):
+
+```
+/work/eic/users/romanov/epic-background-2025-10/          # 25.10.4 RECO datasets
+    csv_reco/<dataset>/…/<id>.reco_dis.csv.zip, <id>.mc_dis.csv.zip,
+                          <id>.mcpart_lambda.csv.zip, <id>.reco_ff_lambda.csv.zip
+/work/eic/users/romanov/epic-background-2026-05/          # 26.05.0 ALP campaign
+    csv_eicrecon/<dataset>/…/<id>.trk_hits.csv.zip, <id>.mc_particles.csv.zip,
+                             <id>.reco_particles.csv.zip
+```
+
+where `<dataset>` mirrors the campaign strip names above (e.g.
+`Bkg_1SignalPer2usFrame_DIS_NC_10x100_q2-gt-1`,
+`Bkg_Exact1S_2us_e_only_…_ALP_…_10x110_ma_1.0`).
+
+### Download over XRootD
+
+Pull the `.csv.zip` leaves with `xrdcp` from the JLab scientific-computing
+XRootD door, which fronts the farm **work** filesystem at its native
+`/work/...` path. Copy a single file:
+
+```bash
+xrdcp \
+  'root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2025-10/csv_reco/Bkg_1SignalPer2usFrame_DIS_NC_10x100_q2-gt-1/<id>.reco_dis.csv.zip' \
+  .
+```
+
+…or a whole leaf dataset directory with `-r`:
+
+```bash
+xrdcp -r \
+  'root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2026-05/csv_eicrecon/Bkg_Exact1S_2us_e_only_GoldCt_10um_EW_BSM_ALP_madgraph5-3.7.0-1.0_aem-axem_10x110_ma_1.0/' \
+  ./alp_ma1.0_csv/
+```
+
+List what's available under a campaign directory the same way:
+
+```bash
+xrdfs root://sci-xrootd.jlab.org ls /work/eic/users/romanov/epic-background-2025-10/csv_reco
+```
+
 ## Campaign 25.10
 
 Not available on Rucio, but can be downloaded from JLab xrootd
