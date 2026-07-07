@@ -12,7 +12,7 @@ after a new Rucio campaign, run the `update-data-md` skill: it queries Rucio,
 digests the DIDs with `scripts/summarize_rucio_dids.py`, and guides authoring
 the strips (labels, colours, and tooltips are set by hand).
 
-_Last updated: **2026-06-29**_
+_Last updated: **2026-07-07**_
 
 ## Conventions
 
@@ -191,24 +191,68 @@ Not available on Rucio, but can be downloaded from JLab xrootd
   version="25.10.4"
   name="Bkg_1SignalPer2usFrame"
 >
-  <Tags color="violet" desc="Physics process">
-    <Tag desc="Deep Inelastic Scattering (NC, 10x100 & 10x275)">DIS</Tag>
-    <Tag desc="Exclusive processes (DDVCS_ABCONV, DVMP)">EXCLUSIVE</Tag>
-    <Tag desc="Semi-Inclusive DIS">SIDIS</Tag>
-    <Tag desc="Synchrotron radiation background (18 GeV)">Synrad</Tag>
+  <Tags color="violet" desc="Signal physics process">
+    <Tag desc="Deep Inelastic Scattering, neutral current (pythia8), 10x100 & 10x275">DIS/NC</Tag>
+    <Tag desc="Double DVCS, afterburner + γ→ee conversion (EpIC 1.1.6-1.0), 18x275">DDVCS_ABCONV</Tag>
+    <Tag desc="Deeply Virtual Meson Production, π⁰ (EpIC 1.1.6-1.1), 18x275">DVMP</Tag>
+    <Tag desc="Semi-Inclusive DIS (pythia6-eic), 18x275 — only 1 reco file present so far">SIDIS</Tag>
+    <Tag desc="DVCS, afterburner + conversion (18x275) — exists only inside the Synrad subtree">DVCS_ABCONV</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy (e × p, GeV)">
+    <Tag desc="e 10 × p 100 GeV (DIS/NC)">10x100</Tag>
+    <Tag desc="e 10 × p 275 GeV (DIS/NC)">10x275</Tag>
+    <Tag desc="e 18 × p 275 GeV (DDVCS, DVMP, SIDIS, Synrad)">18x275</Tag>
+  </Tags>
+  <Tags color="orange" desc="Background mixed into each 2 µs frame">
+    <Tag desc="Full cocktail: synrad + ebrems + ecoulomb + etouschek + p-beam-gas (all top-level channels)">cocktail</Tag>
+    <Tag desc="Synchrotron radiation only — 18 GeV, vacuum, 10000 Ah·r (the Synrad_18GeV_… subtree)">synrad-only</Tag>
+  </Tags>
+  <Tags color="amber" desc="Q² range (GeV²)">
+    <Tag desc="minQ2 = 1 (DIS/NC)">gt-1</Tag>
+    <Tag desc="0–10 (DDVCS)">0to10</Tag>
+    <Tag desc="1–1000 (DVMP)">1to1000</Tag>
+    <Tag desc="~0–1 (SIDIS)">0to1</Tag>
   </Tags>
   <More color="slate">
     <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Signal-mixing scheme: exactly 1 signal event per 2 µs timeframe">1 signal / 2 µs</Tag>
+    <Tag desc="Generator: pythia8 (DIS/NC)">pythia8</Tag>
+    <Tag desc="Generator: EpIC 1.1.6 (DDVCS, DVMP)">EpIC1.1.6</Tag>
+    <Tag desc="Generator: pythia6-eic 1.0.0 (SIDIS)">pythia6-eic</Tag>
+    <Tag desc="DDVCS electron-decay channel, negative/positive scattered hadron">edecay hminus/hplus</Tag>
   </More>
   <Dids>
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/NC/10x100
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/NC/10x275
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/DDVCS_ABCONV
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/DVMP
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/SIDIS
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/Synrad_18GeV_Vac_10000Ahr_Runtime_50s_Egas_18GeV_Hgas_275GeV
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/NC/10x100/minQ2=1
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/NC/10x275/minQ2=1
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/DDVCS_ABCONV/EpIC1.1.6-1.0/18x275/q2_0_10/edecay/hminus
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/DDVCS_ABCONV/EpIC1.1.6-1.0/18x275/q2_0_10/edecay/hplus
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/EXCLUSIVE/DVMP/EpIC1.1.6-1.1/unpolarised/18x275/q2_1_1000
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/SIDIS/pythia6-eic/1.0.0/18x275/q2_0to1
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/Synrad_18GeV_Vac_10000Ahr_Runtime_50s_Egas_18GeV_Hgas_275GeV/DIS/NC/18x275/minQ2=1
+/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/Synrad_18GeV_Vac_10000Ahr_Runtime_50s_Egas_18GeV_Hgas_275GeV/EXCLUSIVE/DVCS_ABCONV/18x275
   </Dids>
 </DidStrips>
+
+The six signal channels above resolve to **eight leaf datasets** (the
+directories that actually hold the RECO `.edm4eic.root` files). The
+`DDVCS_ABCONV` channel splits into `hminus`/`hplus`, and the `Synrad_18GeV_…`
+folder is a self-contained subtree (DIS/NC + DVCS_ABCONV) mixed with
+**synchrotron radiation only** rather than the full cocktail:
+
+| Leaf dataset | Beam | Background | Files |
+| --- | --- | --- | --- |
+| `DIS/NC/10x100/minQ2=1` | 10x100 | cocktail | 4 978 |
+| `DIS/NC/10x275/minQ2=1` | 10x275 | cocktail | 5 922 |
+| `EXCLUSIVE/DDVCS_ABCONV/…/q2_0_10/edecay/hminus` | 18x275 | cocktail | 7 517 |
+| `EXCLUSIVE/DDVCS_ABCONV/…/q2_0_10/edecay/hplus` | 18x275 | cocktail | 7 517 |
+| `EXCLUSIVE/DVMP/…/unpolarised/18x275/q2_1_1000` | 18x275 | cocktail | 6 803 |
+| `SIDIS/pythia6-eic/1.0.0/18x275/q2_0to1` | 18x275 | cocktail | **1** ⚠️ |
+| `Synrad_18GeV_…/DIS/NC/18x275/minQ2=1` | 18x275 | synrad-only | 46 696 |
+| `Synrad_18GeV_…/EXCLUSIVE/DVCS_ABCONV/18x275` | 18x275 | synrad-only | 20 103 |
+
+> ⚠️ **SIDIS** currently has a single reconstructed file
+> (`…run10.ab.0173…`) — the rest of that dataset is not (yet) reconstructed on
+> XRootD. Treat it as a placeholder until the campaign completes.
 
 <DidStrips
   didpath="/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_Exactly1SignalPer2usFrame/"
