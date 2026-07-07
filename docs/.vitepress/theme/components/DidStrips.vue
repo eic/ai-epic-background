@@ -56,6 +56,7 @@ export default defineComponent({
   name: 'DidStrips',
   props: {
     didpath: { type: String, default: '' },
+    csvpath: { type: String, default: '' }, // XRootD path to the converted CSVs (optional)
     version: { type: String, default: '' },
     name:    { type: String, default: '' },
     open:    { type: Boolean, default: false }, // start expanded
@@ -169,6 +170,7 @@ export default defineComponent({
     const copyAll    = () => { writeClip(model.value.dids.join('\n')); flash('all'); };
     const copyRow    = (i) => { writeClip(model.value.dids[i]); flash('row' + i); };
     const copyPrefix = () => { writeClip(props.didpath); flash('prefix'); };
+    const copyCsv    = () => { writeClip(props.csvpath); flash('csv'); };
 
     // ---- tooltip -------------------------------------------------------
     function showTip(e, text) { if (!text) return; tip.value = { show: true, text, x: e.clientX, y: e.clientY }; }
@@ -179,7 +181,7 @@ export default defineComponent({
     return {
       props, isOpen, copied, tip, model,
       chip, kindHue, hueOf,
-      copyAll, copyRow, copyPrefix, showTip, hideTip, toggle,
+      copyAll, copyRow, copyPrefix, copyCsv, showTip, hideTip, toggle,
     };
   },
 });
@@ -237,6 +239,19 @@ export default defineComponent({
             <span class="ds-prefix-ico">{{ copied === 'prefix' ? '&#10003;' : '&#128203;' }}</span>
             <code class="ds-prefix-txt">{{ props.didpath }}</code>
             <span class="ds-prefix-hint">{{ copied === 'prefix' ? 'Copied' : 'Copy prefix' }}</span>
+          </div>
+
+          <div
+            v-if="props.csvpath"
+            class="ds-prefix ds-csv"
+            :class="{ copied: copied === 'csv' }"
+            @click.stop="copyCsv"
+            title="Click to copy the XRootD path to the converted CSVs"
+          >
+            <span class="ds-prefix-ico">{{ copied === 'csv' ? '&#10003;' : '&#128203;' }}</span>
+            <span class="ds-csv-badge">CSV</span>
+            <code class="ds-prefix-txt">{{ props.csvpath }}</code>
+            <span class="ds-prefix-hint">{{ copied === 'csv' ? 'Copied' : 'Copy CSV path' }}</span>
           </div>
         </div>
 
@@ -373,6 +388,22 @@ export default defineComponent({
   letter-spacing: 0.06em;
   color: var(--vp-c-text-3);
 }
+
+/* converted-CSV path line: same layout as the DID prefix, with a CSV badge */
+.ds-csv-badge {
+  flex: none;
+  font-family: var(--vp-font-family-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ea580c;
+  background: color-mix(in srgb, #ea580c 11%, var(--vp-c-bg));
+  border: 1px solid color-mix(in srgb, #ea580c 32%, var(--vp-c-bg));
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.ds-csv.copied { border-color: #16a34a; }
 
 .ds-actions { display: flex; flex-direction: column; gap: 8px; flex: none; }
 .ds-btn {
