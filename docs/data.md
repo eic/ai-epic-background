@@ -167,12 +167,6 @@ epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
 
 ## Campaign 2026-06 — Meson-structure k-Λ background
 
-Meson structure-function **k-Λ** signal, reconstructed with background mixed in
-and beam effects (afterburner) applied. Not on Rucio — it lives on the
-JLab farm work disk under
-`/work/eic3/users/romanov/meson-structure-2026-06/reco-background/`, one
-directory per beam energy, readable over XRootD via `root://dtn-eic.jlab.org`.
-
 <DidStrips
   didpath="/work/eic3/users/romanov/meson-structure-2026-06/reco-background/"
   version="2026-06"
@@ -203,6 +197,10 @@ directory per beam energy, readable over XRootD via `root://dtn-eic.jlab.org`.
   </Dids>
 </DidStrips>
 
+Meson structure-function **k-Λ** signal, reconstructed with background mixed in
+and beam effects (afterburner) applied. Not on Rucio — it lives on the JLab farm
+work disk under `/work/eic3/users/romanov/meson-structure-2026-06/reco-background/`,
+one directory per beam energy, readable over XRootD via `root://dtn-eic.jlab.org`.
 Each beam energy is a separate leaf dataset of reconstructed
 `k_lambda_<beam>_5000evt_*.edm4eic.root` files:
 
@@ -228,6 +226,7 @@ Not available on Rucio, but can be downloaded from JLab xrootd
 
 <DidStrips
   didpath="/volatile/eic/EPIC/RECO/25.10.0/epic_craterlake/Bkg_1SignalPer2usFrame/"
+  csvpath="root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2025-10/csv_reco/"
   version="25.10.0"
   name="Bkg_1SignalPer2usFrame"
 >
@@ -313,6 +312,7 @@ folder is a self-contained subtree (DIS/NC + DVCS_ABCONV) mixed with
 
 <DidStrips
   didpath="/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_Exactly1SignalPer2usFrame/"
+  csvpath="root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2025-10/csv_reco/"
   version="25.10.4"
   name="Bkg_Exactly1SignalPer2usFrame"
 >
@@ -328,6 +328,7 @@ folder is a self-contained subtree (DIS/NC + DVCS_ABCONV) mixed with
 
 <DidStrips
   didpath="/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_OnlyPer2usFrame/"
+  csvpath="root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2025-10/csv_reco/"
   version="25.10.4"
   name="Bkg_OnlyPer2usFrame"
 >
@@ -341,6 +342,7 @@ folder is a self-contained subtree (DIS/NC + DVCS_ABCONV) mixed with
 
 <DidStrips
   didpath="/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_RealisticSignalPer2usFrame/"
+  csvpath="root://sci-xrootd.jlab.org//work/eic/users/romanov/epic-background-2025-10/csv_reco/"
   version="25.10.4"
   name="Bkg_RealisticSignalPer2usFrame"
 >
