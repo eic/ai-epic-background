@@ -164,6 +164,61 @@ epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
 
 <!-- END STRIPS -->
 
+## Campaign 2026-06 — Meson-structure k-Λ background
+
+Meson structure-function **k-Λ** signal, reconstructed with background mixed in
+and beam effects (afterburner) applied. Not on Rucio — it lives on the
+JLab farm work disk under
+`/work/eic3/users/romanov/meson-structure-2026-06/reco-background/`, one
+directory per beam energy, readable over XRootD via `root://dtn-eic.jlab.org`.
+
+<DidStrips
+  didpath="/work/eic3/users/romanov/meson-structure-2026-06/reco-background/"
+  version="2026-06"
+  name="reco-background"
+>
+  <Tags color="violet" desc="Signal physics process">
+    <Tag desc="Meson structure function, exclusive K⁺Λ (eic_mesonsf_generator)">k-Λ</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy (e × p, GeV)">
+    <Tag desc="e 10 × p 100 GeV — 68 files × 5000 evt">10x100</Tag>
+    <Tag desc="e 10 × p 130 GeV — 43 files × 5000 evt">10x130</Tag>
+    <Tag desc="e 18 × p 275 GeV — 107 files × 5000 evt">18x275</Tag>
+  </Tags>
+  <Tags color="orange" desc="Background">
+    <Tag desc="Background mixed in (has_background=true) with beam effects / afterburner applied">background + beam-effects</Tag>
+  </Tags>
+  <More color="slate">
+    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Reconstructed (EICrecon) edm4eic output">RECO</Tag>
+    <Tag desc="Generator: eic_mesonsf_generator">eic_mesonsf_generator</Tag>
+    <Tag desc="Software release: eicdev-eic-full-2026-06-01.sif">eicdev 2026-06-01</Tag>
+    <Tag desc="5000 events per file">5000 evt/file</Tag>
+  </More>
+  <Dids>
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x100
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x130
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/18x275
+  </Dids>
+</DidStrips>
+
+Each beam energy is a separate leaf dataset of reconstructed
+`k_lambda_<beam>_5000evt_*.edm4eic.root` files:
+
+| Leaf dataset | Beam | Files | Events/file |
+| --- | --- | --- | --- |
+| `reco-background/10x100` | 10x100 | 68 | 5 000 |
+| `reco-background/10x130` | 10x130 | 43 | 5 000 |
+| `reco-background/18x275` | 18x275 | 107 | 5 000 |
+
+Stream or pull a file over XRootD, e.g.:
+
+```bash
+xrdcp \
+  'root://dtn-eic.jlab.org//work/eic3/users/romanov/meson-structure-2026-06/reco-background/18x275/k_lambda_18x275_5000evt_0022.edm4eic.root' \
+  .
+```
+
 ## Converted CSV strips (on the JLab farm)
 
 The strips above are the **input** RECO datasets. The full-sim pipeline
