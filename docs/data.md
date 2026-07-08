@@ -197,26 +197,10 @@ epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
   </Dids>
 </DidStrips>
 
-Meson structure-function **k-Λ** signal, reconstructed with background mixed in
-and beam effects (afterburner) applied. Not on Rucio — it lives on the JLab farm
-work disk under `/work/eic3/users/romanov/meson-structure-2026-06/reco-background/`,
-one directory per beam energy, readable over XRootD via `root://dtn-eic.jlab.org`.
-Each beam energy is a separate leaf dataset of reconstructed
-`k_lambda_<beam>_5000evt_*.edm4eic.root` files:
-
-| Leaf dataset | Beam | Files | Events/file |
-| --- | --- | --- | --- |
-| `reco-background/10x100` | 10x100 | 68 | 5 000 |
-| `reco-background/10x130` | 10x130 | 43 | 5 000 |
-| `reco-background/18x275` | 18x275 | 107 | 5 000 |
-
-Stream or pull a file over XRootD, e.g.:
-
-```bash
-xrdcp \
-  'root://dtn-eic.jlab.org//work/eic3/users/romanov/meson-structure-2026-06/reco-background/18x275/k_lambda_18x275_5000evt_0022.edm4eic.root' \
-  .
-```
+k-Λ signal reconstructed with background + beam effects — not on Rucio, on the
+JLab work disk (XRootD via `root://dtn-eic.jlab.org`). One leaf per beam energy
+of `k_lambda_<beam>_5000evt_*.edm4eic.root`; file counts are in the beam-energy
+tooltips above.
 
 ## Campaign 25.10
 
