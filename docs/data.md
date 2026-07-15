@@ -12,7 +12,7 @@ after a new Rucio campaign, run the `update-data-md` skill: it queries Rucio,
 digests the DIDs with `scripts/summarize_rucio_dids.py`, and guides authoring
 the strips (labels, colours, and tooltips are set by hand).
 
-_Last updated: **2026-07-07**_
+_Last updated: **2026-07-14**_
 
 ## Conventions
 
@@ -28,6 +28,86 @@ _Last updated: **2026-07-07**_
   the shared DID prefix.
 
 <!-- BEGIN STRIPS -->
+
+
+## Campaign 26.07.0
+
+<DidStrips
+  didpath="epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/"
+  version="26.07.0"
+  name="Bkg_Exact1S_2us"
+>
+  <Tags color="violet" desc="Physics process">
+    <Tag desc="Deep Inelastic Scattering">DIS</Tag>
+    <Tag desc="Neutral-current exchange">NC</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy">
+    <Tag desc="Beam energy 10x100 GeV (e 10 x p 100)">10x100</Tag>
+    <Tag desc="Beam energy 10x275 GeV (e 10 x p 275)">10x275</Tag>
+  </Tags>
+  <Tags color="amber" desc="Minimum momentum transfer">
+    <Tag desc="Minimum Q2 >= 1 GeV2">minQ2=1</Tag>
+    <Tag desc="Minimum Q2 >= 10 GeV2">minQ2=10</Tag>
+    <Tag desc="Minimum Q2 >= 100 GeV2">minQ2=100</Tag>
+    <Tag desc="Minimum Q2 >= 1000 GeV2">minQ2=1000</Tag>
+  </Tags>
+  <More color="slate">
+    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Beam-pipe gold coating">GoldCt</Tag>
+    <Tag desc="Coating thickness 10 um">10um</Tag>
+  </More>
+  <Dids>
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100
+epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000
+  </Dids>
+</DidStrips>
+
+
+## Campaign 2026-06
+
+**Meson-structure k-Λ background**
+
+<DidStrips
+  didpath="/work/eic3/users/romanov/meson-structure-2026-06/reco-background/"
+  version="2026-06"
+  name="reco-background"
+>
+  <Tags color="violet" desc="Signal physics process">
+    <Tag desc="Meson structure function, exclusive K⁺Λ (eic_mesonsf_generator)">k-Λ</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy (e × p, GeV)">
+    <Tag desc="e 10 × p 100 GeV — 68 files × 5000 evt">10x100</Tag>
+    <Tag desc="e 10 × p 130 GeV — 43 files × 5000 evt">10x130</Tag>
+    <Tag desc="e 18 × p 275 GeV — 107 files × 5000 evt">18x275</Tag>
+  </Tags>
+  <Tags color="orange" desc="Background">
+    <Tag desc="Background mixed in (has_background=true) with beam effects / afterburner applied">background + beam-effects</Tag>
+  </Tags>
+  <More color="slate">
+    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Reconstructed (EICrecon) edm4eic output">RECO</Tag>
+    <Tag desc="Generator: eic_mesonsf_generator">eic_mesonsf_generator</Tag>
+    <Tag desc="Software release: eicdev-eic-full-2026-06-01.sif">eicdev 2026-06-01</Tag>
+    <Tag desc="5000 events per file">5000 evt/file</Tag>
+  </More>
+  <Dids>
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x100
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x130
+/work/eic3/users/romanov/meson-structure-2026-06/reco-background/18x275
+  </Dids>
+</DidStrips>
+
+k-Λ signal reconstructed with background + beam effects — not on Rucio, on the
+JLab work disk (XRootD via `root://dtn-eic.jlab.org`). One leaf per beam energy
+of `k_lambda_<beam>_5000evt_*.edm4eic.root`; file counts are in the beam-energy
+tooltips above.
+
 
 ## Campaign 26.05.0
 
@@ -84,6 +164,7 @@ epic:/RECO/26.05.0/epic_craterlake/Bkg_Exact1S_2us_e_only/GoldCt/10um/EW_BSM/ALP
   </Dids>
 </DidStrips>
 
+
 ## Campaign 26.04.1
 
 <DidStrips
@@ -130,6 +211,7 @@ epic:/RECO/26.04.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
   </Dids>
 </DidStrips>
 
+
 ## Campaign 26.03.0
 
 <DidStrips
@@ -165,42 +247,6 @@ epic:/RECO/26.03.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/min
 
 <!-- END STRIPS -->
 
-## Campaign 2026-06 — Meson-structure k-Λ background
-
-<DidStrips
-  didpath="/work/eic3/users/romanov/meson-structure-2026-06/reco-background/"
-  version="2026-06"
-  name="reco-background"
->
-  <Tags color="violet" desc="Signal physics process">
-    <Tag desc="Meson structure function, exclusive K⁺Λ (eic_mesonsf_generator)">k-Λ</Tag>
-  </Tags>
-  <Tags color="sky" desc="Beam energy (e × p, GeV)">
-    <Tag desc="e 10 × p 100 GeV — 68 files × 5000 evt">10x100</Tag>
-    <Tag desc="e 10 × p 130 GeV — 43 files × 5000 evt">10x130</Tag>
-    <Tag desc="e 18 × p 275 GeV — 107 files × 5000 evt">18x275</Tag>
-  </Tags>
-  <Tags color="orange" desc="Background">
-    <Tag desc="Background mixed in (has_background=true) with beam effects / afterburner applied">background + beam-effects</Tag>
-  </Tags>
-  <More color="slate">
-    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
-    <Tag desc="Reconstructed (EICrecon) edm4eic output">RECO</Tag>
-    <Tag desc="Generator: eic_mesonsf_generator">eic_mesonsf_generator</Tag>
-    <Tag desc="Software release: eicdev-eic-full-2026-06-01.sif">eicdev 2026-06-01</Tag>
-    <Tag desc="5000 events per file">5000 evt/file</Tag>
-  </More>
-  <Dids>
-/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x100
-/work/eic3/users/romanov/meson-structure-2026-06/reco-background/10x130
-/work/eic3/users/romanov/meson-structure-2026-06/reco-background/18x275
-  </Dids>
-</DidStrips>
-
-k-Λ signal reconstructed with background + beam effects — not on Rucio, on the
-JLab work disk (XRootD via `root://dtn-eic.jlab.org`). One leaf per beam energy
-of `k_lambda_<beam>_5000evt_*.edm4eic.root`; file counts are in the beam-energy
-tooltips above.
 
 ## Campaign 25.10
 
