@@ -1,18 +1,28 @@
 # Data Format
 
-The CSV files produced by `trk_hits_to_csv.cxx` contain **one row per tracker hit
-association**. Each row joins three things:
+CSV is produced by the [converter macros](/csv-convert) in `csv_convert/`, one
+per *role*. Each converter has its own column layout; there is no single shared
+schema. Files are named `<input-stem>.<role>.csv` (e.g.
+`msf_9x130_0001.trk_hits.csv`), so the role in the filename tells you which
+layout to expect.
+
+This page documents the **`edm4eic_trk_hits`** converter in full, as the worked
+example — it is the richest per-hit dump and the one the background plots use.
+The other converters follow the same conventions (leading `evt` index,
+`prt_*` truth columns, SI units); read their `.cxx` headers in `csv_convert/`
+for the exact columns.
+
+## `trk_hits` — one row per tracker-hit association
+
+Each row joins three things:
 
 - the reconstructed tracker hit (`edm4eic::TrackerHit`),
 - the underlying simulation hit (`edm4hep::SimTrackerHit`),
 - the `MCParticle` that produced the simulation hit.
 
 This makes every row self-contained: it carries enough truth and reconstructed
-information to be used standalone for analysis or ML training.
-
-## Columns
-
-The header is written by `HitRecord::make_csv_header()` in `trk_hits_to_csv.cxx`.
+information to be used standalone for analysis or ML training. The header is
+written by `HitRecord::make_csv_header()` in `csv_convert/edm4eic_trk_hits.cxx`.
 
 ### Event and indexing
 
@@ -28,9 +38,13 @@ The header is written by `HitRecord::make_csv_header()` in `trk_hits_to_csv.cxx`
 | ------------- | ----- | ---------------------------------------------------------------- |
 | `prt_pdg`     | —     | PDG code (e.g. `11` = e⁻, `211` = π⁺, `2212` = proton)           |
 | `prt_status`  | —     | Generator status: `1` = primary from generator, `0` = G4-created |
+| `prt_origin`  | —     | Provenance: `0` unknown, `1` signal, `2` G4-gen from signal, `3` background, `4` G4-gen from background |
 | `prt_energy`  | GeV   | Total energy                                                     |
 | `prt_charge`  | e     | Electric charge                                                  |
 | `prt_mom_x/y/z` | GeV/c | Momentum components                                            |
+
+> `prt_origin` is the key column for background studies: it separates
+> signal-derived hits from the mixed-in background cocktail.
 
 ### Particle vertex (production point)
 
@@ -67,28 +81,29 @@ The header is written by `HitRecord::make_csv_header()` in `trk_hits_to_csv.cxx`
 
 ## Detector coverage
 
-The converter currently iterates over all standard ePIC tracker hit-association
+`edm4eic_trk_hits` iterates over all standard ePIC tracker hit-association
 collections:
 
 ```
-B0TrackerRawHitAssociations          ForwardOffMTrackerRawHitAssociations
-BackwardMPGDEndcapRawHitAssociations  ForwardRomanPotRawHitAssociations
-ForwardMPGDEndcapRawHitAssociations   MPGDBarrelRawHitAssociations
-OuterMPGDBarrelRawHitAssociations     RICHEndcapNRawHitsAssociations
-SiBarrelRawHitAssociations            SiBarrelVertexRawHitAssociations
-SiEndcapTrackerRawHitAssociations     TOFBarrelRawHitAssociations
+B0TrackerRawHitAssociations           ForwardOffMTrackerRawHitAssociations
+BackwardMPGDEndcapRawHitAssociations   ForwardRomanPotRawHitAssociations
+ForwardMPGDEndcapRawHitAssociations    MPGDBarrelRawHitAssociations
+OuterMPGDBarrelRawHitAssociations      RICHEndcapNRawHitsAssociations
+SiBarrelRawHitAssociations             SiBarrelVertexRawHitAssociations
+SiEndcapTrackerRawHitAssociations      TOFBarrelRawHitAssociations
 TOFEndcapRawHitAssociations
 ```
 
-Calorimeter associations are listed in the source but not currently written to the
-CSV (the `process_calo_hits` call is commented out in `process_event`).
+Calorimeter associations are handled by a **separate** converter,
+`edm4eic_calo_clusters.cxx` (one row per cluster↔MCParticle association), rather
+than being written into the tracker-hit CSV.
 
 ## Loading the CSV
 
 ```python
 import pandas as pd
 
-df = pd.read_csv("hits.csv")
+df = pd.read_csv("msf_9x130_0001.trk_hits.csv")
 print(df.shape, df.columns.tolist()[:6])
 
 # Filter one event
@@ -96,6 +111,10 @@ event_0 = df[df["evt"] == 0]
 
 # Keep only primary particles
 primaries = df[df["prt_status"] == 1]
+
+# Signal-only vs background hits
+signal = df[df["prt_origin"].isin([1, 2])]
+background = df[df["prt_origin"].isin([3, 4])]
 
 # Group by detector system
 hits_per_system = df.groupby("trk_hit_system_name").size()

@@ -64,8 +64,8 @@ class TrackerHitsDataset(Dataset):
 ```
 
 For multi-file datasets, point a Dataset at a directory of `*.csv.zip` (which is
-exactly what the [Snakemake workflow](/csv-convert-snakemake) writes into
-`csv-zip/`) and stream files lazily.
+exactly what the [CSV conversion jobs](/csv-convert-snakemake) write next to each
+CSV output) and stream files lazily.
 
 ## Useful filters
 

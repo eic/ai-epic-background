@@ -51,7 +51,7 @@ export default defineConfig({
                 items: [
                     { text: 'Overview', link: '/csv-convert' },
                     { text: 'Running the Converter', link: '/csv-convert-running' },
-                    { text: 'Snakemake & SLURM', link: '/csv-convert-snakemake' },
+                    { text: 'Batch on SLURM', link: '/csv-convert-snakemake' },
                 ]
             },
             {

@@ -81,5 +81,5 @@ stage is independently rerunnable, which matters because:
 - A single bad input shouldn't fail the whole stage.
 - Stages have very different resource profiles (afterburner is fast, `npsim` is
   long, `EICrecon` is memory-heavy).
-- Rerunning a single failed file by re-submitting one script is much cheaper than
-  re-launching a full Snakemake DAG.
+- Rerunning a single failed file by re-submitting its one `*.container.sh`
+  script is much cheaper than re-launching a whole stage.

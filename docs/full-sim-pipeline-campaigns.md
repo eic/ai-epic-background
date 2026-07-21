@@ -2,82 +2,84 @@
 
 A "campaign" is a coherent production run with a fixed container image, a fixed
 beam-energy set, and a fixed output base directory. Each one lives in its own
-YAML config under `full-sim-pipeline/`.
+**self-contained** YAML config under `configs/` in the
+[`simulation-pipeline`](/full-sim-pipeline) submodule — no inheritance, no base
+files.
 
 ## Existing campaigns
 
-| Config file                              | Notes                                              |
-| ---------------------------------------- | -------------------------------------------------- |
-| `config-campaign-25-10.yaml`             | October 2025 production                            |
-| `config-campaign-26-03.yaml`             | March 2026 production                              |
-| `config-campaign-26-04.yaml`             | April 2026 production (current default)            |
-| `config-campaign-official_2026-02.yaml`  | Official ePIC central production reuse for Feb 2026 |
+| Config file                       | Notes                                                    |
+| --------------------------------- | -------------------------------------------------------- |
+| `config-msf-26-07.yaml`           | Meson-structure, July 2026 production                    |
+| `config-msf-26-07-background.yaml`| Same, with the background cocktail merged in             |
+| `config-off-26-06.yaml`           | Official ePIC campaign — RECO already on Rucio, CSV only |
 
 ## Config layout
 
-The configs follow a uniform schema. Excerpt from `config-campaign-26-04.yaml`:
+Each config is fully self-contained, and each stage is a **top-level block** with
+its own `input` / `output` (stages chain by `${...}` interpolation). Excerpt from
+`config-off-26-06.yaml`:
 
 ```yaml
 # Base directory — everything else is relative to this
-base_dir: "/work/eic3/users/romanov/meson-structure-2026-04-check"
+base_dir: "/work/eic3/users/romanov/dis-csv-2026-06"
 
-# Bind mounts inside the container
+# Container image (pin a stable tag for reproducibility) + bind mounts
+container: "/cvmfs/singularity.opensciencegrid.org/eicweb/eic_xl:26.06.0-stable"
 bind_dirs:
   - "${base_dir}"
 
-# Container image (pin a stable tag for reproducibility)
-container: "/work/eic3/users/romanov/meson-structure-work/eicdev-eic-full-2026-04-25.sif"
-
-# Pipeline scripts directory
-scripts_dir: "/work/eic3/users/romanov/meson-structure-work/meson-structure/full-sim-pipeline"
-
-# Set true to render scripts without submitting
-dry_run: false
-
 # Beam-energy combinations to process (electron x proton GeV)
-energies:
-  - "5x41"
-  - "10x100"
-  - "10x130"
-  - "18x275"
+energies: ["5x41", "9x100", "9x130", "9x275"]
 
-# Events per output file
 event_count: 5000
 
-# Per-stage I/O paths — note ${base_dir} and ${energy} substitution
-dd4hep_input:  "${base_dir}/afterburner/${energy}-priority"
-dd4hep_output: "${base_dir}/dd4hep/${energy}"
+# Farm etiquette (see the pipeline README): logs off /work, 2G/CPU, batching.
+farm_out_dir: "/farm_out/romanov"
+slurm_mem_per_cpu: "2G"
+slurm_files_per_job: 20
 
-dd4hep_saveall_input:  "${base_dir}/afterburner/${energy}-priority"
-dd4hep_saveall_output: "${base_dir}/dd4hep_saveall/${energy}"
+# generate_datasets writes cards under <datasets_dir>/<stage>/
+datasets_dir: "${base_dir}/datasets"
 
-csv_dd4hep_input:  "${dd4hep_output}"
-csv_dd4hep_output: "${base_dir}/csv_dd4hep${suffix}/${energy}"
+# A csv stage: where CSVs land + which converter macros run.
+csv_eicrecon:
+  output: "${base_dir}/csv_eicrecon"
+  macros:
+    - edm4eic_trk_hits
+    - edm4eic_calo_clusters
+    - edm4eic_mc_particles
+    - edm4eic_reco_particles
 ```
 
-The variables `${base_dir}`, `${energy}`, and `${suffix}` are interpolated by the
-Python job-creation scripts at render time.
+The variables `${base_dir}`, `${energy}`, and cross-stage references like
+`${afterburner.output}` are interpolated by the pipeline at render time.
 
 ## Starting a new campaign
 
-1. Copy the most recent config (e.g. `cp config-campaign-26-04.yaml
-   config-campaign-26-08.yaml`).
+1. Copy the closest existing config (e.g. `cp configs/config-off-26-06.yaml
+   configs/config-off-26-08.yaml`).
 2. Update `base_dir` to your new output root.
 3. Pin `container:` to whatever `eic_xl` tag you want to lock in.
-4. Adjust `energies` and `event_count` if needed.
-5. Run the stage scripts in order:
+4. Adjust `energies`, `event_count`, and each csv stage's `macros:` if needed.
+5. Mint dataset cards, then run the stages in order (cards first, jobs second):
 
    ```bash
-   python 10_create_afterburner_jobs.py --config config-campaign-26-08.yaml
-   python 20_create_npsim_jobs.py       --config config-campaign-26-08.yaml
-   python 30_create_eicrecon_jobs.py    --config config-campaign-26-08.yaml
-   python 41_create_csv_eicrecon_jobs.py --config config-campaign-26-08.yaml
+   generate_datasets afterburner -c configs/config-off-26-08.yaml
+   python simulation_pipeline/10_create_afterburner_jobs.py -c configs/config-off-26-08.yaml
+   # ... npsim, eicrecon ...
+   generate_datasets csv_eicrecon -c configs/config-off-26-08.yaml
+   python simulation_pipeline/40_csv_convert.py csv_eicrecon -c configs/config-off-26-08.yaml
    ```
 
-   Each one renders the per-input scripts and a SLURM submitter into
-   `${base_dir}/<stage>/${energy}/...`.
+   Each stage renders the per-input scripts and a SLURM array submitter into
+   `${base_dir}/<stage>/.../jobs/`.
 
-6. Submit the SLURM submitter for each stage when its inputs are ready.
+6. Submit each stage's `submit_all_slurm_jobs.sh` when its inputs are ready.
+
+   Official campaigns whose RECO is already on Rucio skip the local sim chain
+   entirely — mint cards with `generate_datasets csv_eicrecon --rucio` and go
+   straight to the CSV stage.
 
 ## "saveall" variant
 
@@ -86,4 +88,4 @@ saving hits — including the tracking volume itself. This produces dramatically
 larger outputs but is what you want for background occupancy / AI training:
 every Geant4 hit is preserved, not just the ones in normal readout volumes.
 
-The `dd4hep_saveall_*` config keys point at this branch of the pipeline.
+The `npsim_saveall` config block points at this branch of the pipeline.

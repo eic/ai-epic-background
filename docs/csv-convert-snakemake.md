@@ -1,114 +1,80 @@
-# Snakemake & SLURM
+# Batch on SLURM
 
-The `Snakefile` under `csv_convert/` runs `trk_hits_to_csv.cxx` over all
-`*.edm4eic.root` files in a chosen input directory and writes one CSV per input,
-then zips each result into a parallel `csv-zip/` tree.
+> The old Snakemake workflow (`Snakefile`, `run_jlab_slurm.sh`, `uv`-managed
+> deps) is **retired**. CSV conversion is now driven by
+> `40_csv_convert.py`, which emits SLURM **job arrays** through the shared
+> [`JobCreator`](/full-sim-pipeline-jobs). This page covers how those jobs are
+> laid out and submitted.
 
-## Configuring paths
+## Generating the jobs
 
-The Snakefile reads the output base from the `OUT_BASE` environment variable. If
-it's missing, the workflow errors with a helpful message:
-
-```bash
-export OUT_BASE="/volatile/eic/$USER/25.10.4_bkg-1signal-2us-frame_dis-nc_10x100_minq2-1"
-```
-
-The current default `INPUT_DIR` is hard-coded near the top of the Snakefile to:
-
-```
-/volatile/eic/EPIC/RECO/25.10.4/epic_craterlake/Bkg_1SignalPer2usFrame/DIS/NC/10x100/minQ2=1
-```
-
-Edit this value if you want to point at a different campaign.
-
-## Container
-
-The workflow runs each rule inside the ePIC nightly Singularity image:
-
-```
-/cvmfs/singularity.opensciencegrid.org/eicweb/eic_xl:nightly
-```
-
-Pin to a stable tag (e.g. `25.10.x-stable`) for reproducible production runs.
-
-## Setup
-
-We use [`uv`](https://docs.astral.sh/uv/) for Python deps:
+See [Running the Converter](/csv-convert-running) — in short:
 
 ```bash
-cd csv_convert
-uv sync
+cd simulation-pipeline
+generate_datasets csv_eicrecon -c configs/config-off-26-06.yaml
+python simulation_pipeline/40_csv_convert.py csv_eicrecon -c configs/config-off-26-06.yaml
 ```
 
-This installs `snakemake`, `pandas`, `matplotlib`, and the `cluster-generic`
-executor plugin used for SLURM submission.
+This writes a flat `jobs/` directory under the stage's output path.
 
-## Running locally
+## What gets written
 
-Dry run (shows what would execute):
+For output dir `…/csv-reco/9x130`, the generator produces:
+
+```
+…/csv-reco/9x130/
+├── jobs/
+│   ├── <stem>.container.sh          # per-file: runs the config's macros
+│   ├── <stem>.slurm.sh              # per-file wrapper (for reruns of one file)
+│   ├── container_scripts.list       # the list the array indexes into
+│   ├── array.slurm.sh               # the SLURM job-array wrapper
+│   ├── submit_all_slurm_jobs.sh     # master submitter (one or few sbatch calls)
+│   └── run_all_local.sh             # run everything locally, in sequence
+└── <stem>.<role>.csv[.zip]          # the CSV outputs land here
+```
+
+## Submitting
 
 ```bash
-uv run snakemake -n
+cd …/csv-reco/9x130/jobs
+./submit_all_slurm_jobs.sh          # queues everything as SLURM array(s)
 ```
 
-Run with 8 cores inside the container:
+To debug a single input, run its per-file script directly:
 
 ```bash
-uv run snakemake --cores 8 \
-  --use-singularity \
-  --singularity-args "--bind /volatile:/volatile --bind /cvmfs:/cvmfs"
+bash …/csv-reco/9x130/jobs/<stem>.container.sh   # inside the container env
 ```
 
-## Running on SLURM (JLab)
-
-The simplest way is the bundled helper script:
+Or run the whole set locally, in sequence, with timing:
 
 ```bash
-./run_jlab_slurm.sh /volatile/eic/$USER/25.10.4_bkg-1signal-2us-frame_dis-nc_10x100_minq2-1
+./run_all_local.sh
 ```
 
-It exports `OUT_BASE`, ensures the log directory exists, and then submits
-Snakemake to the SLURM `production` partition with up to 2000 concurrent jobs.
+## Farm etiquette (baked in)
 
-If you want full control, the equivalent manual invocation is:
+The generator applies the JLab farm rules automatically — you don't set these by
+hand:
 
-```bash
-OUT_BASE="/volatile/eic/$USER/25.10.4_bkg-1signal-2us-frame_dis-nc_10x100_minq2-1"
-LOGS="${OUT_BASE}/logs"
-mkdir -p "$LOGS"
+- **SLURM stdout/stderr never goes to `/work`** (it overloads the work file
+  server). Logs go under `farm_out_dir` (default `/farm_out/$USER`), mirroring the
+  output path, e.g. `/farm_out/romanov/work/eic3/.../csv-reco/9x130/`. Job scripts
+  and CSV outputs still live on `/work`.
+- **Memory defaults to 2G/CPU** — the farm is provisioned for 2GB per CPU;
+  requesting more makes SLURM bill extra CPUs. Override per campaign with
+  `slurm_mem_per_cpu` only if a stage truly needs it.
+- **Files are batched per job** (`slurm_files_per_job`, default 20) and array
+  calls are chunked under the cluster's `MaxArraySize`, so jobs run for minutes
+  rather than seconds (admins flag sub-2-minute jobs).
 
-uv run snakemake \
-  --executor cluster-generic --jobs 2000 \
-  --cluster-generic-submit-cmd "sbatch \
-    --account=eic \
-    --partition=production \
-    --cpus-per-task={threads} \
-    --mem=4000 \
-    --time=01:00:00 \
-    --output=${LOGS}/slurm-%j.out \
-    --error=${LOGS}/slurm-%j.err" \
-  --use-singularity \
-  --singularity-args "--bind /volatile:/volatile --bind /cvmfs:/cvmfs"
-```
-
-## Outputs
-
-After a successful run, `OUT_BASE` looks like:
-
-```
-$OUT_BASE/
-├── csv/<sample>.csv          # one row per tracker hit
-├── csv-zip/<sample>.csv.zip  # zipped CSVs (smaller, friendlier for transfer)
-└── logs/<sample>.hits.log    # per-job logs
-```
-
-Inputs are matched against `*.edm4eic.root`; the basename (minus the suffix) becomes
-`<sample>`. The Snakefile slices to the first 100 inputs by default — adjust the
-`inputs = inputs[:100]` line if you want more.
+These knobs are config fields (`farm_out_dir`, `slurm_mem_per_cpu`,
+`slurm_files_per_job`) — see the [Full-Sim Pipeline](/full-sim-pipeline).
 
 ## Prerequisites
 
-- `uv` for Python package management
-- `apptainer` / `singularity` on compute nodes
-- Access to `/cvmfs` and `/volatile` (JLab farm)
-- SLURM for batch mode
+- `apptainer` / `singularity` on compute nodes (the container image is set per
+  campaign in the config).
+- Access to `/cvmfs` and `/work` (JLab farm).
+- SLURM for batch mode.

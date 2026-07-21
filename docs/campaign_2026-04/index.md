@@ -36,17 +36,18 @@ Key parameters (from each dataset's `rucio_metadata`):
 ## How the CSVs are produced
 
 The conversion streams each ROOT file directly over XRootD (no local copy) and
-runs the `trk_hits_to_csv.cxx` macro inside the campaign container. See
-[CSV Convert](/csv-convert) for the converter itself and
+runs the `edm4eic_*` converter macros inside the campaign container. See
+[CSV Convert](/csv-convert) for the converters themselves and
 [Available Datasets](/data) for the full Rucio catalogue.
 
 Two pipeline steps drive it:
 
-1. **`42_create_datasets_list.py`** — queries Rucio
+1. **`generate_datasets csv_eicrecon --rucio`** — queries Rucio
    (`is_background_mixed=true`, pattern `epic:*RECO/26.04.1*`) and writes one
    **dataset card** YAML per DID into `datasets/`.
-2. **`41_create_csv_eicrecon_jobs.py`** — reads those cards and generates the
-   conversion jobs, one result directory per dataset.
+2. **`40_csv_convert.py csv_eicrecon`** — reads those cards and generates the
+   conversion jobs, one result directory per dataset, running the config's
+   `csv_eicrecon.macros`.
 
 ## Output layout
 
@@ -71,7 +72,7 @@ csv_eicrecon/
 
 ## Dataset cards
 
-Each dataset has a YAML card written by `42_create_datasets_list.py` carrying
+Each dataset has a YAML card written by `generate_datasets --rucio` carrying
 its DID, slug, parsed `metadata`, authoritative `rucio_metadata`, and the full
 file list:
 

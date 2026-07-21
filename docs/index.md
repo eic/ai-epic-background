@@ -11,12 +11,14 @@ on use cases for AI / ML training and physics studies of detector occupancy.
 
 The work has three pillars:
 
-1. **`full-sim-pipeline/`** — orchestration scripts that drive the ePIC simulation chain
-   (`afterburner` → `npsim` → `EICrecon`) on the JLab farm and produce reconstructed
-   `edm4eic` ROOT files for one or more beam-energy campaigns.
-2. **`csv_convert/`** — a small C++/ROOT converter (`trk_hits_to_csv.cxx`) plus
-   Snakemake workflow that flattens those ROOT files into CSV: one row per
-   tracker hit with the linked `MCParticle` truth.
+1. **`simulation-pipeline/`** — a shared submodule of orchestration scripts that
+   drive the ePIC simulation chain (`afterburner` → `npsim` → `EICrecon`) on the
+   JLab farm and produce reconstructed `edm4eic` ROOT files for one or more
+   beam-energy campaigns.
+2. **`simulation-pipeline/csv_convert/`** — a set of C++/ROOT converter macros
+   (`edm4eic_*` / `edm4hep_*`), driven by `40_csv_convert.py`, that flatten those
+   ROOT files into CSV: one macro per role (tracker hits, reco particles, DIS
+   kinematics, …), each row carrying the linked `MCParticle` truth.
 3. **`analyses/`** — standalone Python analyses on the produced CSVs. Each
    analysis lives in its own subfolder with its scripts and a short README.
 
@@ -62,8 +64,8 @@ converter.
 The entire chain is reproducible by design:
 
 - Pinned `eic_xl` Singularity containers — every job runs in the same image.
-- Snakemake workflows for the CSV-conversion step.
-- One YAML campaign config per release, checked into the repo.
+- SLURM job arrays for every stage, including CSV conversion.
+- One self-contained YAML campaign config per release, checked into the repo.
 
 So any run can be re-executed at any time, against the exact container and detector
 release it was originally produced with.
@@ -72,29 +74,28 @@ release it was originally produced with.
 
 ```
 ai-epic-background/
-├── csv_convert/              # ROOT → CSV converter + Snakemake workflow
-│   ├── trk_hits_to_csv.cxx
-│   ├── CMakeLists.txt
-│   ├── Snakefile
-│   ├── run_jlab_slurm.sh
-│   └── pyproject.toml
-├── analyses/                 # Python analyses (one subfolder each)
+├── simulation-pipeline/          # shared submodule: ePIC simulation orchestration
+│   ├── simulation_pipeline/      # stage job generators (run as scripts)
+│   │   ├── 10_create_afterburner_jobs.py
+│   │   ├── 11_create_background_jobs.py
+│   │   ├── 20_create_npsim_jobs.py
+│   │   ├── 21_create_npsim_saveall_jobs.py
+│   │   ├── 22_create_npsim_background_jobs.py
+│   │   ├── 30_create_eicrecon_jobs.py
+│   │   ├── 40_csv_convert.py      # ONE csv script for all csv stages
+│   │   ├── generate_datasets.py   # dataset-card producer
+│   │   ├── datasets.py            # card schema / config loader
+│   │   └── job_creator.py         # SLURM job-array engine
+│   ├── csv_convert/               # ROOT → CSV converter macros
+│   │   ├── edm4eic_trk_hits.cxx
+│   │   ├── edm4eic_reco_particles.cxx
+│   │   └── edm4hep_*.cxx / edm4eic_*.cxx
+│   └── configs/                   # one self-contained YAML per campaign
+├── analyses/                      # Python analyses (one subfolder each)
 │   └── time-vs-z-plots/
 │       └── background_analysis.py
-├── full-sim-pipeline/        # ePIC simulation orchestration
-│   ├── 10_create_afterburner_jobs.py
-│   ├── 11_create_background_jobs.py
-│   ├── 20_create_npsim_jobs.py
-│   ├── 21_create_npsim_saveall_jobs.py
-│   ├── 22_create_npsim_background_jobs.py
-│   ├── 30_create_eicrecon_jobs.py
-│   ├── 40_create_csv_dd4hep_jobs.py
-│   ├── 41_create_csv_eicrecon_jobs.py
-│   ├── 50_create_analysis_jobs.py
-│   ├── job_creator.py
-│   └── config-campaign-*.yaml
-├── docs/                     # this VitePress site
-└── .github/workflows/        # GitHub Pages deployment
+├── docs/                          # this VitePress site
+└── .github/workflows/             # GitHub Pages deployment
 ```
 
 ## Where to start
