@@ -3,7 +3,7 @@
 Available **background-mixed** datasets in Rucio. Source of truth:
 
 ```bash
-rucio did list --filter 'is_background_mixed=true' 'epic:*RECO/26.04.1*'
+rucio did list --filter 'is_background_mixed=true' 'epic:*'
 ```
 
 The campaign strips below are authored by hand with the `<DidStrips>`
@@ -12,7 +12,7 @@ after a new Rucio campaign, run the `update-data-md` skill: it queries Rucio,
 digests the DIDs with `scripts/summarize_rucio_dids.py`, and guides authoring
 the strips (labels, colours, and tooltips are set by hand).
 
-_Last updated: **2026-07-14**_
+_Last updated: **2026-08-20**_
 
 ## Conventions
 
@@ -30,10 +30,67 @@ _Last updated: **2026-07-14**_
 <!-- BEGIN STRIPS -->
 
 
+## Campaign 26.07.1
+
+<DidStrips
+  didpath="epic:/{FULL|RECO}/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/"
+  version="26.07.1"
+  name="Bkg_Exact1S_2us"
+>
+  <Tags color="violet" desc="Physics process">
+    <Tag desc="Deep Inelastic Scattering (pythia8), neutral current">DIS</Tag>
+    <Tag desc="Neutral-current exchange">NC</Tag>
+    <Tag desc="Semi-Inclusive DIS (pythia6-eic 1.0.0)">SIDIS</Tag>
+  </Tags>
+  <Tags color="sky" desc="Beam energy">
+    <Tag desc="Beam energy 10x100 GeV (e 10 x p 100) — both DIS/NC and SIDIS">10x100</Tag>
+    <Tag desc="Beam energy 10x275 GeV (e 10 x p 275) — both DIS/NC and SIDIS">10x275</Tag>
+  </Tags>
+  <Tags color="amber" desc="Momentum transfer">
+    <Tag desc="DIS/NC: minimum Q2 >= 1 GeV2">minQ2=1</Tag>
+    <Tag desc="DIS/NC: minimum Q2 >= 10 GeV2">minQ2=10</Tag>
+    <Tag desc="DIS/NC: minimum Q2 >= 100 GeV2">minQ2=100</Tag>
+    <Tag desc="DIS/NC: minimum Q2 >= 1000 GeV2">minQ2=1000</Tag>
+    <Tag desc="SIDIS branch only: Q2 range 0-1 GeV2">q2_0to1</Tag>
+  </Tags>
+  <More color="slate">
+    <Tag desc="Detector: ePIC craterlake">epic_craterlake</Tag>
+    <Tag desc="Beam-pipe gold coating">GoldCt</Tag>
+    <Tag desc="Coating thickness 10 um">10um</Tag>
+    <Tag desc="Generator for the SIDIS branch: pythia6-eic v1.0.0">pythia6-eic/1.0.0</Tag>
+  </More>
+  <Dids>
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/pythia6-eic/1.0.0/10x100/q2_0to1
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/pythia6-eic/1.0.0/10x100/q2_0to1
+epic:/FULL/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/pythia6-eic/1.0.0/10x275/q2_0to1
+epic:/RECO/26.07.1/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/SIDIS/pythia6-eic/1.0.0/10x275/q2_0to1
+  </Dids>
+</DidStrips>
+
+Adds a **SIDIS** branch (pythia6-eic 1.0.0, `q2_0to1`) alongside the DIS/NC
+grid, and every dataset now has both a **FULL** (sim) and a **RECO** partition.
+
+
 ## Campaign 26.07.0
 
 <DidStrips
-  didpath="epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/"
+  didpath="epic:/{FULL|RECO}/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/"
   version="26.07.0"
   name="Bkg_Exact1S_2us"
 >
@@ -57,13 +114,21 @@ _Last updated: **2026-07-14**_
     <Tag desc="Coating thickness 10 um">10um</Tag>
   </More>
   <Dids>
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=10
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=100
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x100/minQ2=1000
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=10
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=100
+epic:/FULL/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000
 epic:/RECO/26.07.0/epic_craterlake/Bkg_Exact1S_2us/GoldCt/10um/DIS/NC/10x275/minQ2=1000
   </Dids>
 </DidStrips>
