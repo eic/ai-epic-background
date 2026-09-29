@@ -12,7 +12,7 @@ after a new Rucio campaign, run the `update-data-md` skill: it queries Rucio,
 digests the DIDs with `scripts/summarize_rucio_dids.py`, and guides authoring
 the strips (labels, colours, and tooltips are set by hand).
 
-_Last updated: **2026-08-20**_
+_Last updated: **2026-09-29**_
 
 ## Conventions
 

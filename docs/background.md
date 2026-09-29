@@ -53,13 +53,16 @@ The current campaign convention for status offsets is:
 | etouschek      |   5000 |        5001 |       5002 |
 | p-beam-gas     |   6000 |        6001 |       6002 |
 
-(See [eic/eic.github.io / background\_mixed\_samples](https://github.com/eic/eic.github.io/blob/main/_resources/background_mixed_samples.md)
-for the official conventions and worked examples with timeframe diagrams.)
+(See [eic/eic.github.io / background\_mixed\_samples](https://github.com/eic/eic.github.io/blob/master/_resources/background_mixed_samples.md)
+for the official conventions and worked examples with timeframe diagrams.
+Note: as of 2026-09 that page lists etouschek = 4000 / ecoulomb = 5000 —
+swapped relative to the `config_data/*.json` cocktails actually used by the
+campaigns, which assign coulomb = 4000 / touschek = 5000 as in the table
+above. The JSONs are the ground truth for what ran.)
 
 ### Where the cocktail recipes live
 
 **Repo:** [eic/simulation\_campaign\_datasets](https://github.com/eic/simulation_campaign_datasets)
-(tracked here as the submodule `eic_official_campaign_info`)
 
 `config_data/*.json` — one cocktail per beam-energy / vacuum-condition
 combination. Each file is a list of entries like:
@@ -82,8 +85,8 @@ Field meanings:
 | Field    | Meaning                                                                 |
 | -------- | ----------------------------------------------------------------------- |
 | `file`   | XrootD URL of an already-prepared background HepMC3.                    |
-| `freq`   | Poisson rate in **events/ns** (so 3.3 M = 3.3 GHz for synrad).          |
-| `skip`   | Fraction of the file's events to skip before sampling (parallel jobs use this to read non-overlapping windows of the same source). |
+| `freq`   | Poisson rate in **kHz** (so 3 324 000 kHz = 3.3 GHz for synrad).        |
+| `skip`   | Number of events to skip before sampling. `0.0` in the current JSONs — `run.sh` ignores it and computes its own per-job skip (rate-scaled by task index plus a seed-driven random offset) so parallel jobs read decorrelated windows of the same source. |
 | `status` | Generator-status offset added to every particle from this source.       |
 
 ### Merger command (what the campaign actually runs)
@@ -92,18 +95,24 @@ Field meanings:
 SignalBackgroundMerger \
     --rngSeed     <per-job seed> \
     --nSlices     <events_per_task> \
+    --signalSkip  <events already consumed by earlier tasks> \
     --signalFile  <afterburned signal>.hepmc3.tree.root \
     --signalFreq  0 \
     --signalStatus 0 \
-    --bgFile <synrad_url>   3324000 0.0 2000 \
-    --bgFile <egas_url>      316.94 0.0 3000 \
-    --bgFile <coulomb_url>     0.86 0.0 4000 \
-    --bgFile <touschek_url>    0.55 0.0 5000 \
+    --intWindow   2000 \
+    --bgFile <synrad_url>   3324000 <skip> 2000 \
+    --bgFile <egas_url>      316.94 <skip> 3000 \
+    --bgFile <coulomb_url>     0.86 <skip> 4000 \
+    --bgFile <touschek_url>    0.55 <skip> 5000 \
     --outputFile  merged.hepmc3.tree.root
 ```
 
+(`--bgFile` takes `<file> <freq kHz> <n-events-to-skip> <status offset>`;
+the per-source `<skip>` is computed by `run.sh` per job, see above. Cocktails
+with hadron beam gas add a fifth `--bgFile ... 6000` line.)
+
 `--signalFreq 0` is the special "one signal per slice" mode. Setting it to a
-nonzero events/ns value would make signals Poisson-sampled too, which is the
+nonzero kHz value would make signals Poisson-sampled too, which is the
 right thing for low-rate processes like SIDIS-pythia6 where you may want
 events that are pure background.
 
@@ -129,11 +138,16 @@ The two flags that fix this:
 npsim ... \
     --hepmc3.useHepMC3                  true \
     --runType                           batch \
-    --physics.alternativeStableStatuses "1 2001 3001 4001 5001" \
-    --physics.alternativeDecayStatuses  "2 2002 3002 4002 5002" \
+    --physics.alternativeStableStatuses "1 2001 3001 4001 5001 6001" \
+    --physics.alternativeDecayStatuses  "2 2002 3002 4002 5002 6002" \
     --inputFiles                        merged.hepmc3.tree.root \
     --outputFile                        sim.edm4hep.root
 ```
+
+The campaign's `run.sh` builds these lists dynamically from the cocktail:
+`signalStatus+1/+2` plus `status+1/+2` for every `--bgFile` source. So a
+four-source (vacuum) cocktail yields `"1 2001 3001 4001 5001"`, and the
+`hgas` cocktails with proton beam gas add `6001` / `6002` as shown above.
 
 1. **The lists fully replace, not augment.** Forgetting `1` in the stable
    list = signal events stop reaching Geant4.
@@ -166,10 +180,10 @@ SIM.hepmc3.useHepMC3 = True
 | Signal-background merger                      | [eic/HEPMC\_Merger](https://github.com/eic/HEPMC_Merger)                                                                            |
 | Newer timeframe mixer                         | [eic/TimeframeBuilder](https://github.com/eic/TimeframeBuilder)                                                                     |
 | Per-job campaign driver (`run.sh`)            | [eic/simulation\_campaign\_hepmc3](https://github.com/eic/simulation_campaign_hepmc3)                                               |
-| Condor submitter, BG-fetch glue               | [eic/job\_submission\_condor](https://github.com/eic/job_submission_condor)                                                         |
-| Cocktail JSONs + CSV chunk manifests          | [eic/simulation\_campaign\_datasets](https://github.com/eic/simulation_campaign_datasets) (submodule `eic_official_campaign_info`)  |
+| Condor submitter, BG-fetch glue               | [eic/job\_submission\_condor](https://github.com/eic/job_submission_condor) — **archived 2026-08**; [eic/job\_submission\_slurm](https://github.com/eic/job_submission_slurm) is the active submitter repo |
+| Cocktail JSONs + CSV chunk manifests          | [eic/simulation\_campaign\_datasets](https://github.com/eic/simulation_campaign_datasets)                                            |
 | ePIC production docs (release tags, paths)    | [eic/epic-prod](https://github.com/eic/epic-prod)                                                                                   |
-| Official background-mixed sample docs         | [eic/eic.github.io / background\_mixed\_samples](https://github.com/eic/eic.github.io/blob/main/_resources/background_mixed_samples.md) |
+| Official background-mixed sample docs         | [eic/eic.github.io / background\_mixed\_samples](https://github.com/eic/eic.github.io/blob/master/_resources/background_mixed_samples.md) |
 | Spack package for the merger                  | `spack_repo/eic/packages/hepmcmerger/package.py` in [eic/eic-spack](https://github.com/eic/eic-spack)                               |
 | Background-mixed Rucio metadata (`is_background_mixed`) | `scripts/register_to_rucio.py` in [eic/simulation\_campaign\_hepmc3](https://github.com/eic/simulation_campaign_hepmc3)             |
 
